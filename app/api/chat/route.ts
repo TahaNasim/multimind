@@ -6,9 +6,12 @@ const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const MODEL_MAPPING: { [key: string]: string } = {
   'gpt-5': 'openai/gpt-5',
   'claude-4-sonnet': 'anthropic/claude-3.5-sonnet',
-  'gemini-2.5': 'google/gemini-2.5-flash-image-preview:free',
-  'deepseek': 'deepseek/deepseek-chat-v3.1:free'
+  'google': 'google/gemini-1.5-flash-latest:free',
+  'deepseek': "deepseek/deepseek-chat",
+  'perplexity':"'perplexity/pplx-70b-online",
+  'grok': 'xai/grok-1'
 };
+
 
 // Helper function for CORS headers
 function corsHeaders() {

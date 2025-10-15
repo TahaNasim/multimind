@@ -6,7 +6,7 @@ import { useTheme } from '@/lib/theme-context';
 import { Sparkles, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');

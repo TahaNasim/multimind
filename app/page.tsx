@@ -59,10 +59,39 @@ const DeepSeekLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
     }}
   />
 );
+// Add these above AI_MODELS in your page.tsx
+
+const PerplexityLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
+  <div 
+    className={className}
+    style={{
+      backgroundImage: 'url(/svg-logos/perplexity.svg)',
+      backgroundSize: 'contain',
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'center',
+      minWidth: '32px',
+      minHeight: '32px'
+    }}
+  />
+);
+
+const GrokLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
+  <div 
+    className={className}
+    style={{
+      backgroundImage: 'url(/svg-logos/grok.svg)',
+      backgroundSize: 'contain',
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'center',
+      minWidth: '32px',
+      minHeight: '32px'
+    }}
+  />
+);
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
 import { useTheme } from '@/lib/theme-context';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import Link from 'next/link';
 
 interface AIModel {
@@ -128,8 +157,28 @@ const AI_MODELS: AIModel[] = [
     icon: <DeepSeekLogo className="w-8 h-8" />,
     color: 'from-rose-500 to-pink-600',
     bgColor: 'bg-rose-500/10'
+  },
+  {
+    id: 'perplexity',
+    name: 'Perplexity',
+    provider: 'Perplexity AI',
+    description: 'Web-connected, up-to-date answers',
+    icon: <PerplexityLogo className="w-8 h-8" />,
+    color: 'from-blue-500 to-indigo-600',
+    bgColor: 'bg-blue-500/10'
+  },
+  {
+    id: 'grok',
+    name: 'Grok',
+    provider: 'xAI',
+    description: 'Conversational AI by xAI',
+    icon: <GrokLogo className="w-8 h-8" />,
+    color: 'from-orange-500 to-yellow-600',
+    bgColor: 'bg-orange-500/10'
   }
 ];
+
+
 
 export default function Home() {
   const { user, signOut } = useAuth();

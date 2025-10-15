@@ -2,7 +2,9 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase } from './supabase';
+import { supabase } from './supabaseClient';
+import { FcGoogle } from 'react-icons/fc'; // Install with: npm install react-icons
+
 
 interface AuthContextType {
   user: User | null;
@@ -12,6 +14,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
+  signInWithGoogle: () => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -40,6 +43,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
+   const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const { error } = await signInWithGoogle();
+      if (error) throw error;
+      // Supabase will redirect, so no need to push router here
+    } catch (error: unknown) {
+      setError((error as any)?.message || 'Google sign-in failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+   
+
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     const { error } = await supabase.auth.signUp({
@@ -104,6 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signOut,
     resetPassword,
+    signInWithGoogle
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -115,4 +134,9 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
+}
+// Add this function to your auth-context
+async function signInWithGoogle() {
+  const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+  return { error };
 }

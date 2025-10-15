@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { Sparkles } from 'lucide-react';
+import {ModelPreferencesModal} from "@/app/components/ModelPreferencesModal";
 
 export default function AuthForm() {
   const [isLogin, setIsLogin] = useState(true);
@@ -14,6 +15,8 @@ export default function AuthForm() {
   const [message, setMessage] = useState('');
 
   const { signIn, signUp } = useAuth();
+  const [showModelModal, setShowModelModal] = useState(false);
+const [selectedModels, setSelectedModels] = useState<string[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -6,6 +6,8 @@ import { useTheme } from '@/lib/theme-context';
 import { Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { FcGoogle } from 'react-icons/fc';
+import {ModelPreferencesModal} from '@/app/components/ModelPreferencesModal';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -17,9 +19,11 @@ export default function AuthPage() {
   const [message, setMessage] = useState('');
   const [isForgotPassword, setIsForgotPassword] = useState(false);
 
-  const { signIn, signUp, resetPassword } = useAuth();
+  const { signIn, signUp, resetPassword, signInWithGoogle } = useAuth();
   const { darkMode, mounted } = useTheme();
   const router = useRouter();
+  const [showModelModal, setShowModelModal] = useState(false);
+const [selectedModels, setSelectedModels] = useState<string[]>(["gpt-5"]); // default selection
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,189 +47,244 @@ export default function AuthPage() {
         setMessage('Check your email for the confirmation link!');
       }
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'An unknown error occurred');
+      console.error('Auth Error:', error);
+
+      if (error instanceof Error) {
+        setError(error.message);
+      } else if (typeof error === 'string') {
+        setError(error);
+      } else {
+        // Supabase often throws { message: "...", status: ... }
+        setError((error as any)?.message || 'An unknown error occurred');
+      }
+    }
+  finally {
+    setLoading(false);
+  }
+}
+ const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const { error } = await signInWithGoogle();
+      if (error) throw error;
+      // Supabase will redirect, so no need to push router here
+    } catch (error: unknown) {
+      setError((error as any)?.message || 'Google sign-in failed');
     } finally {
       setLoading(false);
     }
   };
+  const handleSavePreferences = async () => {
+  // Save preferences to your backend (optional)
+  await fetch("/api/preferences", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ selectedModels }),
+  });
+  setShowModelModal(false);
+};
 
-  // Don't render until theme is mounted to prevent hydration issues
-  if (!mounted) {
-    return <div className="min-h-screen bg-white dark:bg-slate-900"></div>;
-  }
 
-  return (
-    <div className={cn(
-      "min-h-screen flex items-center justify-center p-6 transition-colors duration-300",
-      darkMode ? "bg-slate-900" : "bg-white"
-    )}>
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Sparkles className="w-8 h-8 text-white" />
-          </div>
-          <h1 className={cn(
-            "text-3xl font-bold mb-2",
-            darkMode ? "text-white" : "text-slate-900"
-          )}>MultiMind</h1>
-          <p className={cn(
-            darkMode ? "text-slate-400" : "text-slate-600"
-          )}>Sign in to continue</p>
+
+
+// Don't render until theme is mounted to prevent hydration issues
+if (!mounted) {
+  return <div className="min-h-screen bg-white dark:bg-slate-900"></div>;
+}
+
+return (
+  <div className={cn(
+    "min-h-screen flex items-center justify-center p-6 transition-colors duration-300",
+    darkMode ? "bg-slate-900" : "bg-white"
+  )}>
+    <div className="w-full max-w-md">
+      {/* Logo */}
+      <div className="text-center mb-8">
+        <div className="w-16 h-16 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <Sparkles className="w-8 h-8 text-white" />
         </div>
+        <h1 className={cn(
+          "text-3xl font-bold mb-2",
+          darkMode ? "text-white" : "text-slate-900"
+        )}>MultiMind</h1>
+        <p className={cn(
+          darkMode ? "text-slate-400" : "text-slate-600"
+        )}>Sign in to continue</p>
+      </div>
 
-        {/* Auth Form */}
-        <div className={cn(
-          "rounded-2xl p-8 backdrop-blur-xl border transition-colors duration-300",
-          darkMode 
-            ? "bg-slate-800/80 border-slate-700/50" 
-            : "bg-white/90 border-slate-200/50"
-        )}>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {!isLogin && !isForgotPassword && (
-              <div>
-                <label htmlFor="fullName" className={cn(
-                  "block text-sm font-medium mb-2",
-                  darkMode ? "text-slate-300" : "text-slate-700"
-                )}>
-                  Full Name
-                </label>
-                <input
-                  id="fullName"
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className={cn(
-                    "w-full rounded-xl px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-violet-500 transition-colors duration-300",
-                    darkMode 
-                      ? "bg-slate-700/50 text-white border-slate-600/50 placeholder-slate-400" 
-                      : "bg-slate-50 text-slate-900 border-slate-300/50 placeholder-slate-500"
-                  )}
-                  placeholder="Enter your full name"
-                  required={!isLogin}
-                />
-              </div>
-            )}
-
+      {/* Auth Form */}
+      <div className={cn(
+        "rounded-2xl p-8 backdrop-blur-xl border transition-colors duration-300",
+        darkMode
+          ? "bg-slate-800/80 border-slate-700/50"
+          : "bg-white/90 border-slate-200/50"
+      )}>
+        {/* Google Sign In Button */}
+        <button
+        type="button"
+        onClick={handleGoogleSignIn}
+        disabled={loading}
+        className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 rounded-xl py-3 font-medium text-slate-700 hover:bg-slate-50 mb-6 transition-all duration-200"
+      >
+        <FcGoogle className="w-5 h-5" />
+        Sign in with Google
+      </button>
+      
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {!isLogin && !isForgotPassword && (
             <div>
-              <label htmlFor="email" className={cn(
+              <label htmlFor="fullName" className={cn(
                 "block text-sm font-medium mb-2",
                 darkMode ? "text-slate-300" : "text-slate-700"
               )}>
-                Email
+                Full Name
               </label>
               <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="fullName"
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
                 className={cn(
                   "w-full rounded-xl px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-violet-500 transition-colors duration-300",
-                  darkMode 
-                    ? "bg-slate-700/50 text-white border-slate-600/50 placeholder-slate-400" 
+                  darkMode
+                    ? "bg-slate-700/50 text-white border-slate-600/50 placeholder-slate-400"
                     : "bg-slate-50 text-slate-900 border-slate-300/50 placeholder-slate-500"
                 )}
-                placeholder="Enter your email"
-                required
+                placeholder="Enter your full name"
+                required={!isLogin}
               />
             </div>
+          )}
 
-            {!isForgotPassword && (
-              <div>
-                <label htmlFor="password" className={cn(
-                  "block text-sm font-medium mb-2",
-                  darkMode ? "text-slate-300" : "text-slate-700"
-                )}>
-                  Password
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className={cn(
-                    "w-full rounded-xl px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-violet-500 transition-colors duration-300",
-                    darkMode 
-                      ? "bg-slate-700/50 text-white border-slate-600/50 placeholder-slate-400" 
-                      : "bg-slate-50 text-slate-900 border-slate-300/50 placeholder-slate-500"
-                  )}
-                  placeholder="Enter your password"
-                  required
-                />
-                {isLogin && (
-                  <div className="mt-2 text-right">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsForgotPassword(true);
-                        setError('');
-                        setMessage('');
-                      }}
-                      className={cn(
-                        "text-sm transition-colors",
-                        darkMode ? "text-slate-400 hover:text-violet-400" : "text-slate-500 hover:text-violet-600"
-                      )}
-                    >
-                      Forgot Password?
-                    </button>
-                  </div>
+          <div>
+            <label htmlFor="email" className={cn(
+              "block text-sm font-medium mb-2",
+              darkMode ? "text-slate-300" : "text-slate-700"
+            )}>
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={cn(
+                "w-full rounded-xl px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-violet-500 transition-colors duration-300",
+                darkMode
+                  ? "bg-slate-700/50 text-white border-slate-600/50 placeholder-slate-400"
+                  : "bg-slate-50 text-slate-900 border-slate-300/50 placeholder-slate-500"
+              )}
+              placeholder="Enter your email"
+              required
+            />
+          </div>
+
+          {!isForgotPassword && (
+            <div>
+              <label htmlFor="password" className={cn(
+                "block text-sm font-medium mb-2",
+                darkMode ? "text-slate-300" : "text-slate-700"
+              )}>
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={cn(
+                  "w-full rounded-xl px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-violet-500 transition-colors duration-300",
+                  darkMode
+                    ? "bg-slate-700/50 text-white border-slate-600/50 placeholder-slate-400"
+                    : "bg-slate-50 text-slate-900 border-slate-300/50 placeholder-slate-500"
                 )}
-              </div>
-            )}
+                placeholder="Enter your password"
+                required
+              />
+              {isLogin && (
+                <div className="mt-2 text-right">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsForgotPassword(true);
+                      setError('');
+                      setMessage('');
+                    }}
+                    className={cn(
+                      "text-sm transition-colors",
+                      darkMode ? "text-slate-400 hover:text-violet-400" : "text-slate-500 hover:text-violet-600"
+                    )}
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
-            {error && (
-              <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
-                <p className="text-red-400 text-sm">{error}</p>
-              </div>
-            )}
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+              <p className="text-red-400 text-sm">{error}</p>
+            </div>
+          )}
 
-            {message && (
-              <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4">
-                <p className="text-green-400 text-sm">{message}</p>
-              </div>
-            )}
+          {message && (
+            <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4">
+              <p className="text-green-400 text-sm">{message}</p>
+            </div>
+          )}
 
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-violet-600 to-purple-700 text-white rounded-xl py-3 font-medium hover:from-violet-700 hover:to-purple-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+          >
+            {loading ? 'Loading...' : isForgotPassword ? 'Send Reset Link' : isLogin ? 'Sign In' : 'Sign Up'}
+          </button>
+        </form>
+         <ModelPreferencesModal
+      open={showModelModal}
+      selected={selectedModels}
+      onChange={setSelectedModels}
+      onClose={() => setShowModelModal(false)}
+      onSave={handleSavePreferences}
+    />
+
+
+        <div className="mt-6 text-center space-y-3">
+          {isForgotPassword ? (
             <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-violet-600 to-purple-700 text-white rounded-xl py-3 font-medium hover:from-violet-700 hover:to-purple-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              onClick={() => {
+                setIsForgotPassword(false);
+                setIsLogin(true);
+                setError('');
+                setMessage('');
+              }}
+              className={cn(
+                "transition-colors",
+                darkMode ? "text-slate-400 hover:text-white" : "text-slate-600 hover:text-slate-800"
+              )}
             >
-              {loading ? 'Loading...' : isForgotPassword ? 'Send Reset Link' : isLogin ? 'Sign In' : 'Sign Up'}
+              Back to Sign In
             </button>
-          </form>
-
-          <div className="mt-6 text-center space-y-3">
-            {isForgotPassword ? (
+          ) : (
+            <>
               <button
-                onClick={() => {
-                  setIsForgotPassword(false);
-                  setIsLogin(true);
-                  setError('');
-                  setMessage('');
-                }}
+                onClick={() => setIsLogin(!isLogin)}
                 className={cn(
                   "transition-colors",
                   darkMode ? "text-slate-400 hover:text-white" : "text-slate-600 hover:text-slate-800"
                 )}
               >
-                Back to Sign In
+                {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
               </button>
-            ) : (
-              <>
-                <button
-                  onClick={() => setIsLogin(!isLogin)}
-                  className={cn(
-                    "transition-colors",
-                    darkMode ? "text-slate-400 hover:text-white" : "text-slate-600 hover:text-slate-800"
-                  )}
-                >
-                  {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
-                </button>
-              </>
-            )}
-          </div>
+            </>
+          )}
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 }
+
