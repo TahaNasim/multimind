@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useTheme } from '@/lib/theme-context';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, TruckElectric } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { FcGoogle } from 'react-icons/fc';
-import {ModelPreferencesModal} from '@/app/components/ModelPreferencesModal';
+
+
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -45,6 +46,7 @@ const [selectedModels, setSelectedModels] = useState<string[]>(["gpt-5"]); // de
         const { error } = await signUp(email, password, fullName);
         if (error) throw error;
         setMessage('Check your email for the confirmation link!');
+        setShowModelModal(true);
       }
     } catch (error: unknown) {
       console.error('Auth Error:', error);
@@ -243,14 +245,7 @@ return (
             {loading ? 'Loading...' : isForgotPassword ? 'Send Reset Link' : isLogin ? 'Sign In' : 'Sign Up'}
           </button>
         </form>
-         <ModelPreferencesModal
-      open={showModelModal}
-      selected={selectedModels}
-      onChange={setSelectedModels}
-      onClose={() => setShowModelModal(false)}
-      onSave={handleSavePreferences}
-    />
-
+      
 
         <div className="mt-6 text-center space-y-3">
           {isForgotPassword ? (
@@ -281,7 +276,7 @@ return (
               </button>
             </>
           )}
-        </div>
+       </div>
       </div>
     </div>
   </div>

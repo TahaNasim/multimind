@@ -141,7 +141,7 @@ const AI_MODELS: AIModel[] = [
     bgColor: 'bg-cyan-500/10'
   },
   {
-    id: 'gemini-2.5',
+    id: 'google',
     name: 'Google',
     provider: 'Gemini',
     description: 'Multimodal reasoning capabilities',
@@ -195,7 +195,7 @@ export default function Home() {
   const [showSettings, setShowSettings] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [recentSessions, setRecentSessions] = useState<{id: string, title: string, firstMessage: string, date: string}[]>([]);
-  
+  const [showModelModal, setShowModelModal] = useState(false);
   // State for file attachments
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [showPhotoOptions, setShowPhotoOptions] = useState(false);
@@ -1514,7 +1514,7 @@ export default function Home() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-
+          
             {/* Password Change Section */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium text-white">Change Password</h3>
