@@ -6,10 +6,10 @@ const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const MODEL_MAPPING: { [key: string]: string } = {
   'gpt-5': 'openai/gpt-5',
   'claude-4-sonnet': 'anthropic/claude-3.5-sonnet',
-  'google': 'google/gemini-1.5-flash-latest:free',
+  'google': 'meta-llama/llama-4-maverick:free',
   'deepseek': "deepseek/deepseek-chat",
-  'perplexity':"'perplexity/pplx-70b-online",
-  'grok': 'xai/grok-1'
+  'perplexity':"perplexity/sonar-reasoning-pro",
+  'grok': "mistralai/mistral-medium-3.1"
 };
 
 

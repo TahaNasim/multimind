@@ -141,7 +141,7 @@ const AI_MODELS: AIModel[] = [
     bgColor: 'bg-cyan-500/10'
   },
   {
-    id: 'gemini-2.5',
+    id: 'google',
     name: 'Google',
     provider: 'Gemini',
     description: 'Multimodal reasoning capabilities',
@@ -184,10 +184,12 @@ export default function Home() {
   const { user, signOut } = useAuth();
   const { darkMode, toggleDarkMode, mounted } = useTheme();
   const [selectedModels, setSelectedModels] = useState<string[]>(AI_MODELS.map(m => m.id));
+  const [allowedModels, setAllowedModels] = useState<string[]>(AI_MODELS.map(m => m.id));
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentInput, setCurrentInput] = useState('');
   const [responses, setResponses] = useState<ModelResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
 
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -195,7 +197,60 @@ export default function Home() {
   const [showSettings, setShowSettings] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [recentSessions, setRecentSessions] = useState<{id: string, title: string, firstMessage: string, date: string}[]>([]);
+    // Settings: AI model preferences state
+    const [prefSelected, setPrefSelected] = useState<string[]>([]);
+    const [prefLoading, setPrefLoading] = useState(false);
+    const [prefSaving, setPrefSaving] = useState(false);
+    const [prefError, setPrefError] = useState('');
+    const [prefMessage, setPrefMessage] = useState('');
+    useEffect(() => {
+    if (!prefMessage) return;
+    const t = setTimeout(() => setPrefMessage(''), 2000);
+    return () => clearTimeout(t);
+  }, [prefMessage]);
+    // Load preferences when Settings modal opens
+    useEffect(() => {
+      if (!user || !showSettings) return;
+      let active = true;
+      (async () => {
+        setPrefLoading(true);
+        setPrefError('');
+        const { data, error } = await supabase
+          .from('user_preferences')
+          .select('selected_models')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (active) {
+          if (error) setPrefError(error.message);
+          else setPrefSelected(data?.selected_models || ['gpt-5']);
+          setPrefLoading(false);
+        }
+      })();
+      return () => { active = false; };
+    }, [user, showSettings]);
   
+    const togglePrefModel = (id: string) => {
+      setPrefSelected(prev => prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]);
+    };
+  
+    const savePreferences = async () => {
+      if (!user) return;
+      setPrefSaving(true);
+      setPrefError('');
+      setPrefMessage('');
+      const { error } = await supabase
+        .from('user_preferences')
+        .upsert({ user_id: user.id, selected_models: prefSelected }, { onConflict: 'user_id' });
+      if (error) {
+        setPrefError(error.message);
+      } else {
+        setPrefMessage('Preferences saved!');
+        // apply to UI immediately
+        setAllowedModels(prefSelected);
+        setSelectedModels(prefSelected);
+      }
+      setPrefSaving(false);
+    };  
   // State for file attachments
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [showPhotoOptions, setShowPhotoOptions] = useState(false);
@@ -254,7 +309,7 @@ export default function Home() {
     if (user) {
       loadRecentSessions();
     }
-  }, [user]);
+  }, [User]);
   
   // Function to load recent chat sessions
   const loadRecentSessions = async () => {
@@ -712,7 +767,7 @@ export default function Home() {
   };
 
   // Show auth form if not logged in
-  if (!user) {
+  if (!User) {
     return (
       <div className={cn(
         "min-h-screen flex items-center justify-center p-6 transition-colors duration-300",
@@ -1092,7 +1147,7 @@ export default function Home() {
               isMobile ? "h-screen pt-16 pb-24" : "h-[calc(100vh-70px)] pb-20"
             )}>
               <div className="flex h-full">
-              {AI_MODELS.map((model) => {
+              {AI_MODELS.filter(m => allowedModels.includes(m.id)).map((model) => {
                 const modelId = model.id;
                 const isSelected = selectedModels.includes(modelId);
                 const response = responses.find(r => r.modelId === modelId);
@@ -1276,10 +1331,10 @@ export default function Home() {
                               ? darkMode ? "text-white" : "text-gray-900"
                               : "text-gray-400"
                           )}>
+                                                        {/* remove DeepSeek greeting so it's consistent */}
                             {model?.name === "GPT-5" && "Hi, I'm GPT-5."}
                             {model?.name === "Claude Sonnet 4" && "Hi maher, how are you?"}
                             {model?.name === "Gemini" && "Hello, Maherunnisa"}
-                            {model?.name === "DeepSeek" && "Hi, I'm DeepSeek."}
                           </h3>
                           <p className={cn(
                             "text-base text-center max-w-md transition-colors duration-300",
@@ -1503,8 +1558,8 @@ export default function Home() {
 
       {/* Settings Modal */}
       {showSettings && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-slate-800 rounded-2xl p-6 w-full max-w-md mx-4 border-2 border-slate-600">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-slate-800 rounded-2xl p-6 w-full max-w-2xl mx-4 border border-slate-700 max-h-[85vh] overflow-y-auto scrollbar-dark">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-white">Settings</h2>
               <button
@@ -1552,7 +1607,70 @@ export default function Home() {
               >
                 {passwordLoading ? 'Updating...' : 'Update Password'}
               </button>
-              
+              {/* AI Model Preferences */}
+<div className="mt-8 pt-6 border-t border-slate-700">
+  <h3 className="text-lg font-semibold text-white mb-1">Customize your chat AI model preferences</h3>
+  <p className="text-slate-400 text-sm mb-6">
+    Easily update your selections anytime in the settings
+  </p>
+
+  {prefLoading ? (
+    <p className="text-slate-300">Loading...</p>
+  ) : (
+    <div className="space-y-5">
+      {AI_MODELS.map((m) => (
+        <div key={m.id} className="flex items-center justify-between">
+          <div className="flex items-start gap-4">
+            <div className="w-7 h-7 flex items-center justify-center mt-0.5">
+              {typeof m.icon === 'function' ? (m.icon(darkMode) as any) : m.icon}
+            </div>
+            <div>
+              <div className="text-white font-medium">{m.name}</div>
+              <div className="text-slate-400 text-sm">
+                {m.description}
+              </div>
+            </div>
+          </div>
+
+          {/* iOS-style toggle */}
+          <label className="inline-flex items-center cursor-pointer select-none ml-4">
+    <input
+        type="checkbox"
+        checked={prefSelected.includes(m.id)}
+        onChange={() => togglePrefModel(m.id)}
+        className="sr-only peer"
+    />
+    {/* FIX: Removed space in 'peer-checked:bg-violet-600' */}
+    <span className="w-12 h-7 rounded-full transition-colors duration-200
+        bg-slate-600 peer-checked:bg-violet-600 relative">
+        <span className="absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow
+            transition-all duration-200 peer-checked:left-6" />
+    </span>
+</label>
+        </div>
+      ))}
+    </div>
+  )}
+
+  {prefError && (
+    <div className="mt-4 bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+      <p className="text-red-400 text-sm">{prefError}</p>
+    </div>
+  )}
+  {prefMessage && (
+    <div className="mt-4 bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+      <p className="text-green-400 text-sm">{prefMessage}</p>
+    </div>
+  )}
+
+  <button
+    onClick={savePreferences}
+    disabled={prefSaving}
+    className="mt-6 w-full bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg py-3 px-4 font-medium hover:from-violet-600 hover:to-purple-700 disabled:opacity-50 transition-all duration-200"
+  >
+    {prefSaving ? 'Saving...' : 'Update preferences'}
+  </button>
+</div>
               {/* Sign Out Button */}
               <div className="mt-6 pt-6 border-t border-slate-600">
                 <button
@@ -1560,7 +1678,7 @@ export default function Home() {
                     signOut();
                     setShowSettings(false);
                   }}
-                  className="w-full flex items-center justify-center gap-2 p-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white rounded-lg transition-colors"
                 >
                   <LogOut className="w-5 h-5" />
                   Sign Out
