@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils';
 import { FcGoogle } from 'react-icons/fc';
 
 
-
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
@@ -245,7 +244,14 @@ return (
             {loading ? 'Loading...' : isForgotPassword ? 'Send Reset Link' : isLogin ? 'Sign In' : 'Sign Up'}
           </button>
         </form>
-      
+         <ModelPreferencesModal
+      open={showModelModal}
+      selected={selectedModels}
+      onChange={setSelectedModels}
+      onClose={() => setShowModelModal(false)}
+      onSave={handleSavePreferences}
+    />
+
 
         <div className="mt-6 text-center space-y-3">
           {isForgotPassword ? (

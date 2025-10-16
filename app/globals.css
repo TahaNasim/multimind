@@ -62,23 +62,27 @@ body {
   background: rgba(71, 85, 105, 1);
 }
 
-/* Horizontal scrollbar specific styles */
-.scrollbar-thin::-webkit-scrollbar:horizontal {
-  height: 8px;
+/* Dark, black scrollbar utility */
+.scrollbar-dark {
+  scrollbar-width: thin;             /* Firefox */
+  scrollbar-color: #0a0a0a #000;     /* thumb track */
 }
 
-.scrollbar-thin::-webkit-scrollbar-track:horizontal {
-  background: rgba(51, 65, 85, 0.3);
-  border-radius: 4px;
+.scrollbar-dark::-webkit-scrollbar {
+  width: 10px;
 }
 
-.scrollbar-thin::-webkit-scrollbar-thumb:horizontal {
-  background: rgba(71, 85, 105, 0.9);
-  border-radius: 4px;
+.scrollbar-dark::-webkit-scrollbar-track {
+  background: #000;
 }
 
-.scrollbar-thin::-webkit-scrollbar-thumb:horizontal:hover {
-  background: rgba(71, 85, 105, 1);
+.scrollbar-dark::-webkit-scrollbar-thumb {
+  background: #0a0a0a;
+  border-radius: 6px;
+}
+
+.scrollbar-dark::-webkit-scrollbar-thumb:hover {
+  background: #111;
 }
 
 /* Hide scrollbar completely */
