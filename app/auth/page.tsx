@@ -23,7 +23,6 @@ export default function AuthPage() {
   const { darkMode, mounted } = useTheme();
   const router = useRouter();
   const [showModelModal, setShowModelModal] = useState(false);
-const [selectedModels, setSelectedModels] = useState<string[]>(["gpt-5"]); // default selection
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,17 +75,7 @@ const [selectedModels, setSelectedModels] = useState<string[]>(["gpt-5"]); // de
       setLoading(false);
     }
   };
-  const handleSavePreferences = async () => {
-  // Save preferences to your backend (optional)
-  await fetch("/api/preferences", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ selectedModels }),
-  });
-  setShowModelModal(false);
-};
-
-
+  
 
 
 // Don't render until theme is mounted to prevent hydration issues
@@ -123,14 +112,14 @@ return (
       )}>
         {/* Google Sign In Button */}
         <button
-        type="button"
-        onClick={handleGoogleSignIn}
-        disabled={loading}
-        className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 rounded-xl py-3 font-medium text-slate-700 hover:bg-slate-50 mb-6 transition-all duration-200"
-      >
-        <FcGoogle className="w-5 h-5" />
-        Sign in with Google
-      </button>
+          type="button"
+          onClick={handleGoogleSignIn}
+          disabled={loading}
+          className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 rounded-xl py-3 font-medium text-slate-700 hover:bg-slate-50 mb-6 transition-all duration-200"
+        >
+          <span className="w-5 h-5 inline-flex items-center justify-center"><FcGoogle /></span>
+          Continue with Google
+        </button>
       
         <form onSubmit={handleSubmit} className="space-y-6">
           {!isLogin && !isForgotPassword && (

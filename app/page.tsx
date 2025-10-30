@@ -1,8 +1,16 @@
 'use client';
 
+
 import { useState, useRef, useEffect } from 'react';
 import { Send, Plus, Moon, Sun, Image, Paperclip, Mic, Sparkles as SparklesIcon, X, History, LogOut, User, ChevronLeft, ChevronRight, Menu } from 'lucide-react';
-
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 // Custom SVG Logo Components
 const GPTLogo = ({ className = "w-8 h-8", darkMode = false }: { className?: string; darkMode?: boolean }) => (
   <div 
@@ -17,7 +25,6 @@ const GPTLogo = ({ className = "w-8 h-8", darkMode = false }: { className?: stri
     }}
   />
 );
-
 const ClaudeLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
   <div 
     className={className}
@@ -181,6 +188,53 @@ const AI_MODELS: AIModel[] = [
 
 
 export default function Home() {
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [showWebSearch, setShowWebSearch] = useState(false);
+const [webQuery, setWebQuery] = useState("");
+const [webResults, setWebResults] = useState<string | null>(null);
+const handleCreateProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/create-project", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, description }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        console.log("AI-generated project:", data.result);
+        alert(`✅ Project created: ${data.result.project_name}`);
+        setOpen(false);
+        setTitle("");
+        setDescription("");
+      } else {
+        alert("❌ Failed to create project");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error connecting to AI");
+    }
+  };
+
+async function handleWebSearch(e: React.FormEvent) {
+  e.preventDefault();
+  if (!webQuery) return;
+
+  try {
+    const res = await fetch(`/api/google-search?q=${encodeURIComponent(webQuery)}`);
+    const data = await res.json();
+    setWebResults(data.answer || "No results found.");
+  } catch (err) {
+    setWebResults("Error fetching results.");
+  }
+}
+
+
+
   const { user, signOut } = useAuth();
   const { darkMode, toggleDarkMode, mounted } = useTheme();
   const [selectedModels, setSelectedModels] = useState<string[]>(AI_MODELS.map(m => m.id));
@@ -204,6 +258,8 @@ export default function Home() {
   const [showFilePicker, setShowFilePicker] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+    
+   
   
   // Check for mobile screen size and collapse sidebar by default
   useEffect(() => {
@@ -226,6 +282,32 @@ export default function Home() {
   }, []);
   const [passwordChange, setPasswordChange] = useState({ current: '', new: '', confirm: '' });
   const [passwordLoading, setPasswordLoading] = useState(false);
+  // Preferences state (used in Settings modal)
+  const [prefLoading, setPrefLoading] = useState(false);
+  const [prefSelected, setPrefSelected] = useState<string[]>(AI_MODELS.map(m => m.id));
+  const [prefError, setPrefError] = useState('');
+  const [prefMessage, setPrefMessage] = useState('');
+  const [prefSaving, setPrefSaving] = useState(false);
+
+  const togglePrefModel = (id: string) => {
+    setPrefSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const savePreferences = async () => {
+    setPrefSaving(true);
+    setPrefError('');
+    try {
+      // Persist locally for now; adapt to API call if needed
+      setAllowedModels(prefSelected);
+      // Update selectedModels to only include allowed ones
+      setSelectedModels(prev => prev.filter(id => prefSelected.includes(id)));
+      setPrefMessage('Preferences updated');
+    } catch (err) {
+      setPrefError('Failed to save preferences');
+    } finally {
+      setPrefSaving(false);
+    }
+  };
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -256,7 +338,7 @@ export default function Home() {
     if (user) {
       loadRecentSessions();
     }
-  }, [User]);
+  }, [user]);
   
   // Function to load recent chat sessions
   const loadRecentSessions = async () => {
@@ -674,6 +756,7 @@ export default function Home() {
     }
   };
   
+  
   // Handle file attachment
   const handleFileAttachment = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -682,14 +765,14 @@ export default function Home() {
       setShowFilePicker(false);
     }
   };
-  
-  // Handle image upload
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('handleImageUpload called, files:', e.target.files);
     if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      setAttachedFiles(prev => [...prev, ...newFiles]);
-      setShowPhotoOptions(false);
-    }
+    const newFiles = Array.from(e.target.files);
+    setAttachedFiles(prev => [...prev, ...newFiles]);
+     setShowPhotoOptions(false);
+
+   }
   };
   
   // Remove attached file
@@ -714,7 +797,7 @@ export default function Home() {
   };
 
   // Show auth form if not logged in
-  if (!User) {
+  if (!user) {
     return (
       <div className={cn(
         "min-h-screen flex items-center justify-center p-6 transition-colors duration-300",
@@ -794,6 +877,9 @@ export default function Home() {
           "h-full transition-all duration-300 overflow-hidden", 
           sidebarCollapsed ? "p-3" : "pl-6 pr-0 py-6"
         )}>
+          
+
+
         {/* Logo and Dark Mode Toggle */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
@@ -861,6 +947,22 @@ export default function Home() {
             {!sidebarCollapsed && <span>History</span>}
           </Link>
         </div>
+        <button
+    onClick={() => setOpen(true)} // opens popup
+    className={cn(
+      "bg-gradient-to-r from-indigo-600 to-purple-700 text-white rounded-lg py-2 flex items-center justify-center gap-2 hover:from-indigo-700 hover:to-purple-800 transition-all duration-200 shadow-lg",
+      sidebarCollapsed ? "w-full px-2" : "flex-1 px-4"
+    )}
+  >
+    <Plus className="w-4 h-4" />
+    {!sidebarCollapsed && <span>Create Project</span>}
+  </button>
+  
+  
+
+          
+      
+        
 
 
 
@@ -919,8 +1021,79 @@ export default function Home() {
                     </div>
                   )}
                 </div>
+                
               </div>
+             {showWebSearch && (
+  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100]">
+    <div className="w-[600px] max-h-[80vh] rounded-2xl p-6 bg-slate-800 text-white relative shadow-2xl overflow-hidden">
+      {/* Close Button */}
+      <button
+        onClick={() => setShowWebSearch(false)}
+        className="absolute top-3 right-3 p-2 rounded-full hover:bg-slate-700"
+      >
+        ✖
+      </button>
+
+      {/* Header */}
+      <div className="mb-4">
+        <h2 className="text-2xl font-semibold flex items-center gap-2">
+          🌐 Web Search
+        </h2>
+        <p className="text-slate-400 text-sm mt-1">
+          Ask anything and get Google-powered answers instantly
+        </p>
+      </div>
+
+      {/* Search Form */}
+      <form onSubmit={handleWebSearch} className="flex gap-3 mb-4">
+        <input
+          type="text"
+          value={webQuery}
+          onChange={(e) => {
+  setWebQuery(e.target.value);
+  if (e.target.value.trim() === "") {
+    setWebResults(null); // clear old results when input is empty
+  }
+}}
+
+          placeholder="Search the web..."
+          className="flex-1 px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500 text-white placeholder-slate-400"
+        />
+        <button
+          type="submit"
+          className="px-5 py-3 bg-violet-600 hover:bg-violet-500 rounded-lg text-white font-medium transition-all duration-200"
+        >
+          Search
+        </button>
+        
+        {/* 🔍 Icon Button */}
+        <button
+          type="submit"
+          className="absolute right-2 text-gray-300 hover:text-white"
+          title="Search"
+        >
+          🔍
+        </button>
+      </form>
+
+      
+
+      {/* Results Area */}
+      <div className="overflow-y-auto bg-slate-700/50 rounded-lg p-4 h-[350px]">
+        {webResults ? (
+          <p className="whitespace-pre-wrap text-sm leading-relaxed">
+            {webResults}
+          </p>
+        ) : (
+          <p className="text-slate-400 text-sm italic">Your results will appear here...</p>
+        )}
+      </div>
+    </div>
+  </div>
+)}
+
             </div>
+
           )}
 
           {/* Settings Section */}
@@ -1028,7 +1201,95 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </div>
+ {open && (
+          <div className="fixed inset-0 z-50 flex items-start">
+            <div className="fixed inset-0 bg-black/60" onClick={() => setOpen(false)} />
+            <div className="m-8 w-[380px] bg-slate-700/50
+ text-white rounded-2xl p-6 shadow-2xl border border-[#3d3269]/50 backdrop-blur-md">
+
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-2xl font-bold">Create New Project</h3>
+                  <p className="text-slate-400 text-sm">Organize your AI tasks in a project workspace.</p>
+                </div>
+                <button
+                  onClick={() => setOpen(false)}
+                  className="text-slate-300 hover:text-white rounded p-1"
+                  aria-label="Close"
+                >
+                  ✖
+                </button>
+              </div>
+<form
+  onSubmit={async (e) => {
+    e.preventDefault();
+
+    const title = (e.currentTarget.elements.namedItem("title") as HTMLInputElement)?.value;
+    const description = (e.currentTarget.elements.namedItem("description") as HTMLTextAreaElement)?.value;
+
+    try {
+      const res = await fetch("/api/create-project", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, description }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert(`✅ Project created: ${data.result.project_name}`);
+      } else {
+        alert("❌ Failed to create project");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error connecting to AI");
+    }
+
+    setOpen(false);
+  }}
+  className="mt-4 flex flex-col gap-4"
+>
+  <div>
+    <label className="block text-sm text-slate-300 mb-1">Project Title</label>
+    <input
+      name="title"
+      placeholder="Enter project title"
+      className="w-full p-2 rounded bg-slate-700 border border-slate-600 text-white focus:outline-none"
+    />
+  </div>
+
+  <div>
+    <label className="block text-sm text-slate-300 mb-1">Description</label>
+    <textarea
+      name="description"
+      placeholder="Short project description"
+      className="w-full p-2 rounded bg-slate-700 border border-slate-600 text-white focus:outline-none h-28"
+    />
+  </div>
+
+  <div className="flex justify-end gap-2">
+    <button
+      type="button"
+      onClick={() => setOpen(false)}
+      className="px-4 py-2 rounded bg-slate-700 hover:bg-slate-600"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      className="px-4 py-2 rounded bg-purple-500 hover:bg-purple-600 text-white"
+    >
+      Create Project
+    </button>
+  </div>
+</form>
+
+            </div>
+          </div>
+        )}
+    </div>
+    
 
       {/* Main Content */}
       <div className={cn(
@@ -1302,6 +1563,7 @@ export default function Home() {
               })}
               </div>
             </div>
+            
 
             {/* Bottom Message Input */}
             <div className={cn(
@@ -1315,8 +1577,17 @@ export default function Home() {
             )}>
               <div className="flex items-center p-2">
                 {/* Left Action Buttons */}
+
                 <div className="flex items-center gap-1 mr-2">
                   <div className="relative">
+                    <button
+  onClick={() => setShowWebSearch(true)}
+  className="p-2 rounded-full hover:bg-slate-700 transition"
+  title="Web Search"
+>
+  🔍
+</button>
+
                     <button 
                       onClick={() => setShowPhotoOptions(!showPhotoOptions)}
                       className={cn(
@@ -1500,8 +1771,8 @@ export default function Home() {
       </div>
 
       <div ref={messagesEndRef} />
-
-
+// ...existing code...
+    
 
       {/* Settings Modal */}
       {showSettings && (
@@ -1635,6 +1906,8 @@ export default function Home() {
           </div>
         </div>
       )}
+      
     </div>
+    
   );
 }

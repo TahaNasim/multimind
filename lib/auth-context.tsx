@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from './supabaseClient';
-import { FcGoogle } from 'react-icons/fc'; // Install with: npm install react-icons
+import { FcGoogle } from 'react-icons/fc';// Install with: npm install react-icons
 
 
 interface AuthContextType {
@@ -140,3 +140,7 @@ async function signInWithGoogle() {
   const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
   return { error };
 }
+function setError(arg0: string) {
+  throw new Error('Function not implemented.');
+}
+

@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { Sparkles } from 'lucide-react';
-import {ModelPreferencesModal} from "@/app/components/ModelPreferencesModal";
 
 export default function AuthForm() {
   const [isLogin, setIsLogin] = useState(true);
