@@ -34,20 +34,20 @@ export async function GET(req: Request) {
       );
     }
 
-    const items = data.items || [];
-    const answer =
-      items.length > 0
-        ? items
-            .map(
-              (item: any) =>
-                `• ${item.title}\n${item.snippet}\n${item.link}\n`
-            )
-            .join("\n\n")
-        : "No results found.";
+   const items = data.items || [];
+const answer =
+  items.length > 0
+    ? items
+        .map(
+          (item: { title?: string; snippet?: string; link?: string }) =>
+            `• ${item.title ?? "No title"}\n${item.snippet ?? ""}\n${item.link ?? ""}\n`
+        )
+        .join("\n\n")
+    : "No results found.";
 
-    return NextResponse.json({ answer });
-  } catch (err: any) {
-    console.error("❌ Fetch error:", err);
-    return NextResponse.json({ error: "Failed to fetch" }, { status: 500 });
-  }
+return NextResponse.json({ answer });
+} catch (err: unknown) {
+  console.error("Google Search API error:", err);
+  return NextResponse.json({ error: "Failed to fetch search results" }, { status: 500 });
+}
 }

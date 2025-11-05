@@ -3,7 +3,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Send, Plus, Moon, Sun, Image, Paperclip, Mic, Sparkles as SparklesIcon, X, History, LogOut, User, ChevronLeft, ChevronRight, Menu } from 'lucide-react';
-import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -13,7 +12,7 @@ import {
 } from "@/components/ui/sheet";
 // Custom SVG Logo Components
 const GPTLogo = ({ className = "w-8 h-8", darkMode = false }: { className?: string; darkMode?: boolean }) => (
-  <div 
+  <div
     className={className}
     style={{
       backgroundImage: `url(/svg-logos/${darkMode ? 'chatgpt-white.svg' : 'gpt-5.svg'})`,
@@ -26,7 +25,7 @@ const GPTLogo = ({ className = "w-8 h-8", darkMode = false }: { className?: stri
   />
 );
 const ClaudeLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
-  <div 
+  <div
     className={className}
     style={{
       backgroundImage: 'url(/svg-logos/claude.svg)',
@@ -40,7 +39,7 @@ const ClaudeLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
 );
 
 const GeminiLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
-  <div 
+  <div
     className={className}
     style={{
       backgroundImage: 'url(/svg-logos/gemini.svg)',
@@ -54,7 +53,7 @@ const GeminiLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
 );
 
 const DeepSeekLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
-  <div 
+  <div
     className={className}
     style={{
       backgroundImage: 'url(/svg-logos/deepseek.svg)',
@@ -69,7 +68,7 @@ const DeepSeekLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
 // Add these above AI_MODELS in your page.tsx
 
 const PerplexityLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
-  <div 
+  <div
     className={className}
     style={{
       backgroundImage: 'url(/svg-logos/perplexity.svg)',
@@ -83,7 +82,7 @@ const PerplexityLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
 );
 
 const GrokLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
-  <div 
+  <div
     className={className}
     style={{
       backgroundImage: 'url(/svg-logos/grok.svg)',
@@ -192,9 +191,9 @@ export default function Home() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [showWebSearch, setShowWebSearch] = useState(false);
-const [webQuery, setWebQuery] = useState("");
-const [webResults, setWebResults] = useState<string | null>(null);
-const handleCreateProject = async (e: React.FormEvent) => {
+  const [webQuery, setWebQuery] = useState("");
+  const [webResults, setWebResults] = useState<string | null>(null);
+  const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const res = await fetch("/api/create-project", {
@@ -220,18 +219,18 @@ const handleCreateProject = async (e: React.FormEvent) => {
     }
   };
 
-async function handleWebSearch(e: React.FormEvent) {
-  e.preventDefault();
-  if (!webQuery) return;
+  async function handleWebSearch(e: React.FormEvent) {
+    e.preventDefault();
+    if (!webQuery) return;
 
-  try {
-    const res = await fetch(`/api/google-search?q=${encodeURIComponent(webQuery)}`);
-    const data = await res.json();
-    setWebResults(data.answer || "No results found.");
-  } catch (err) {
-    setWebResults("Error fetching results.");
+    try {
+      const res = await fetch(`/api/google-search?q=${encodeURIComponent(webQuery)}`);
+      const data = await res.json();
+      setWebResults(data.answer || "No results found.");
+    } catch (err) {
+      setWebResults("Error fetching results.");
+    }
   }
-}
 
 
 
@@ -250,17 +249,17 @@ async function handleWebSearch(e: React.FormEvent) {
   const [isMobile, setIsMobile] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const [recentSessions, setRecentSessions] = useState<{id: string, title: string, firstMessage: string, date: string}[]>([]);
-  
+  const [recentSessions, setRecentSessions] = useState<{ id: string, title: string, firstMessage: string, date: string }[]>([]);
+
   // State for file attachments
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [showPhotoOptions, setShowPhotoOptions] = useState(false);
   const [showFilePicker, setShowFilePicker] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
-    
-   
-  
+
+
+
   // Check for mobile screen size and collapse sidebar by default
   useEffect(() => {
     const handleResize = () => {
@@ -270,13 +269,13 @@ async function handleWebSearch(e: React.FormEvent) {
         setSidebarCollapsed(true);
       }
     };
-    
+
     // Set initial state
     handleResize();
-    
+
     // Add event listener for window resize
     window.addEventListener('resize', handleResize);
-    
+
     // Cleanup
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -332,18 +331,18 @@ async function handleWebSearch(e: React.FormEvent) {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showUserDropdown]);
-  
+
   // Load recent chat sessions
   useEffect(() => {
     if (user) {
       loadRecentSessions();
     }
   }, [user]);
-  
+
   // Function to load recent chat sessions
   const loadRecentSessions = async () => {
     if (!user) return;
-    
+
     try {
       const { data, error } = await supabase
         .from('chat_sessions')
@@ -351,9 +350,9 @@ async function handleWebSearch(e: React.FormEvent) {
         .eq('user_id', user.id)
         .order('updated_at', { ascending: false })
         .limit(10); // Increased to show more chats like ChatGPT
-      
+
       if (error) throw error;
-      
+
       if (data) {
         // For each session, get the first message
         const sessionsWithFirstMessage = await Promise.all(
@@ -366,13 +365,13 @@ async function handleWebSearch(e: React.FormEvent) {
               .order('created_at', { ascending: true })
               .limit(1)
               .single();
-            
+
             // Format the date to show in the UI
             const updatedAt = new Date(session.updated_at);
             const today = new Date();
             const yesterday = new Date(today);
             yesterday.setDate(yesterday.getDate() - 1);
-            
+
             let dateDisplay = '';
             if (updatedAt.toDateString() === today.toDateString()) {
               dateDisplay = 'Today';
@@ -381,7 +380,7 @@ async function handleWebSearch(e: React.FormEvent) {
             } else {
               dateDisplay = updatedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             }
-            
+
             return {
               id: session.id,
               title: session.title,
@@ -390,52 +389,52 @@ async function handleWebSearch(e: React.FormEvent) {
             };
           })
         );
-        
+
         setRecentSessions(sessionsWithFirstMessage);
       }
     } catch (error) {
       console.error('Error loading recent sessions:', error);
     }
   };
-  
+
   // Function to load a specific chat session
   const loadChatSession = async (sessionId: string) => {
     if (!user) return;
-    
+
     try {
       // Validate session ID
       if (!sessionId) {
         throw new Error('Invalid session ID');
       }
-      
+
       // Set current session ID
       setCurrentSessionId(sessionId);
-      
+
       // Clear current messages and responses
       setMessages([]);
       setResponses([]);
-      
+
       // Load messages for this session
       const { data: messagesData, error: messagesError } = await supabase
         .from('chat_messages')
         .select('id, content, role, timestamp')
         .eq('session_id', sessionId)
         .order('timestamp', { ascending: true });
-      
+
       if (messagesError) {
         console.log('Error fetching messages:', messagesError);
         throw new Error(`Failed to fetch messages: ${messagesError.message}`);
       }
-      
+
       if (!messagesData) {
         throw new Error('No message data returned from database');
       }
-      
+
       if (messagesData) {
         // Load all model responses for all user messages
         const userMessages = messagesData.filter(msg => msg.role === 'user');
         const allResponses = new Map();
-        
+
         // For each user message, load its model responses
         for (const userMsg of userMessages) {
           if (userMsg.id) {
@@ -443,20 +442,20 @@ async function handleWebSearch(e: React.FormEvent) {
               .from('model_responses')
               .select('model_id, content, is_best')
               .eq('message_id', userMsg.id);
-            
+
             if (!responsesError && responsesData) {
               allResponses.set(userMsg.id, responsesData);
             }
           }
         }
-        
+
         // Create proper conversational flow: user → AI responses → user → AI responses
         const formattedMessages = [];
-        
+
         // Get only user messages and sort them chronologically
         const userMessagesOnly = messagesData.filter(msg => msg.role === 'user')
           .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-        
+
         for (const userMsg of userMessagesOnly) {
           // Add user message
           formattedMessages.push({
@@ -465,11 +464,11 @@ async function handleWebSearch(e: React.FormEvent) {
             role: 'user' as const,
             timestamp: new Date(userMsg.timestamp)
           });
-          
+
           // Add AI responses for this user message
           if (allResponses.has(userMsg.id)) {
             const responses = allResponses.get(userMsg.id);
-            for (const response of responses as Array<{model_id: string, content: string, is_best?: boolean}>) {
+            for (const response of responses as Array<{ model_id: string, content: string, is_best?: boolean }>) {
               formattedMessages.push({
                 id: `${userMsg.id}-${response.model_id}`,
                 content: response.content,
@@ -481,25 +480,25 @@ async function handleWebSearch(e: React.FormEvent) {
             }
           }
         }
-        
+
         setMessages(formattedMessages);
-        
+
         // Set responses for the last user message (for current interaction)
         if (userMessages.length > 0) {
           const lastUserMessage = userMessages[userMessages.length - 1];
           if (lastUserMessage && allResponses.has(lastUserMessage.id)) {
             const lastResponses = allResponses.get(lastUserMessage.id);
-            const formattedResponses = lastResponses.map((resp: {model_id: string, content: string, is_best?: boolean}) => ({
+            const formattedResponses = lastResponses.map((resp: { model_id: string, content: string, is_best?: boolean }) => ({
               modelId: resp.model_id,
               content: resp.content,
               isLoading: false,
               isBest: resp.is_best
             }));
-            
+
             setResponses(formattedResponses);
-            
+
             // Update selected models based on responses
-            const modelIds = lastResponses.map((resp: {model_id: string, content: string, is_best?: boolean}) => resp.model_id);
+            const modelIds = lastResponses.map((resp: { model_id: string, content: string, is_best?: boolean }) => resp.model_id);
             setSelectedModels(modelIds);
           }
         }
@@ -509,7 +508,7 @@ async function handleWebSearch(e: React.FormEvent) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       const errorDetails = error instanceof Error ? (error.stack || '') : JSON.stringify(error);
       console.error(`Error loading chat session: ${errorMessage}`, { error, details: errorDetails });
-      
+
       // Show a user-friendly message
       alert('Failed to load chat session. Please try again.');
     }
@@ -521,8 +520,8 @@ async function handleWebSearch(e: React.FormEvent) {
   }
 
   const handleModelToggle = (modelId: string) => {
-    setSelectedModels(prev => 
-      prev.includes(modelId) 
+    setSelectedModels(prev =>
+      prev.includes(modelId)
         ? prev.filter(id => id !== modelId)
         : [...prev, modelId]
     );
@@ -530,7 +529,7 @@ async function handleWebSearch(e: React.FormEvent) {
 
   const createNewSession = async () => {
     if (!user) return null;
-    
+
     try {
       const { data, error } = await supabase
         .from('chat_sessions')
@@ -551,7 +550,7 @@ async function handleWebSearch(e: React.FormEvent) {
 
   const saveMessageToDatabase = async (message: Message, sessionId: string) => {
     if (!user) return null;
-    
+
     try {
       const { data, error } = await supabase
         .from('chat_messages')
@@ -595,7 +594,7 @@ async function handleWebSearch(e: React.FormEvent) {
     setCurrentInput('');
     setSelectedModels(AI_MODELS.map(m => m.id));
     setCurrentSessionId(null);
-    
+
     // Refresh recent sessions list
     loadRecentSessions();
   };
@@ -605,7 +604,7 @@ async function handleWebSearch(e: React.FormEvent) {
       alert('New passwords do not match');
       return;
     }
-    
+
     if (passwordChange.new.length < 6) {
       alert('New password must be at least 6 characters');
       return;
@@ -618,7 +617,7 @@ async function handleWebSearch(e: React.FormEvent) {
       });
 
       if (error) throw error;
-      
+
       alert('Password updated successfully!');
       setPasswordChange({ current: '', new: '', confirm: '' });
       setShowSettings(false);
@@ -699,7 +698,7 @@ async function handleWebSearch(e: React.FormEvent) {
       }
 
       const data = await response.json();
-      
+
       if (data.error) {
         throw new Error(data.error);
       }
@@ -730,17 +729,17 @@ async function handleWebSearch(e: React.FormEvent) {
           .from('chat_sessions')
           .update({ title, updated_at: new Date().toISOString() })
           .eq('id', sessionId);
-          
+
         // Refresh recent sessions list
         loadRecentSessions();
       }
 
     } catch (error) {
       console.error('Error getting responses:', error);
-      setResponses(prev => prev.map(r => ({ 
-        ...r, 
-        error: error instanceof Error ? error.message : 'Failed to get response', 
-        isLoading: false 
+      setResponses(prev => prev.map(r => ({
+        ...r,
+        error: error instanceof Error ? error.message : 'Failed to get response',
+        isLoading: false
       })));
     } finally {
       setIsLoading(false);
@@ -755,8 +754,8 @@ async function handleWebSearch(e: React.FormEvent) {
       handleSendMessage();
     }
   };
-  
-  
+
+
   // Handle file attachment
   const handleFileAttachment = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -765,32 +764,32 @@ async function handleWebSearch(e: React.FormEvent) {
       setShowFilePicker(false);
     }
   };
- const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     console.log('handleImageUpload called, files:', e.target.files);
     if (e.target.files) {
-    const newFiles = Array.from(e.target.files);
-    setAttachedFiles(prev => [...prev, ...newFiles]);
-     setShowPhotoOptions(false);
+      const newFiles = Array.from(e.target.files);
+      setAttachedFiles(prev => [...prev, ...newFiles]);
+      setShowPhotoOptions(false);
 
-   }
+    }
   };
-  
+
   // Remove attached file
   const removeAttachedFile = (index: number) => {
     setAttachedFiles(prev => prev.filter((_, i) => i !== index));
   };
-  
+
   // Trigger file input click
   const openFilePicker = () => {
     fileInputRef.current?.click();
   };
-  
+
   // Handle photo options
   const handleTakePhoto = () => {
     // TODO: Implement camera functionality
     setShowPhotoOptions(false);
   };
-  
+
   const handleSelectPhoto = () => {
     imageInputRef.current?.click();
     setShowPhotoOptions(false);
@@ -821,8 +820,8 @@ async function handleWebSearch(e: React.FormEvent) {
           {/* Auth Form */}
           <div className={cn(
             "rounded-2xl p-8 backdrop-blur-xl border transition-colors duration-300",
-            darkMode 
-              ? "bg-slate-800/80 border-slate-700/50" 
+            darkMode
+              ? "bg-slate-800/80 border-slate-700/50"
               : "bg-white/90 border-slate-200/50"
           )}>
             <div className="text-center">
@@ -854,8 +853,8 @@ async function handleWebSearch(e: React.FormEvent) {
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
           className={cn(
             "fixed top-4 left-4 z-50 p-2 rounded-lg transition-all duration-200",
-            darkMode 
-              ? "bg-slate-800/90 text-white hover:bg-slate-700" 
+            darkMode
+              ? "bg-slate-800/90 text-white hover:bg-slate-700"
               : "bg-white/90 text-gray-900 hover:bg-gray-100",
             "shadow-lg backdrop-blur-sm"
           )}
@@ -867,102 +866,102 @@ async function handleWebSearch(e: React.FormEvent) {
       {/* Sidebar */}
       <div className={cn(
         "fixed left-0 top-0 h-full backdrop-blur-xl transition-all duration-300 z-40",
-        darkMode 
-          ? "bg-slate-800/80 border-r border-slate-600" 
+        darkMode
+          ? "bg-slate-800/80 border-r border-slate-600"
           : "bg-white/90 border-r border-slate-300",
         sidebarCollapsed ? "w-16" : "w-64",
         isMobile && sidebarCollapsed ? "-translate-x-full" : "translate-x-0"
       )}>
         <div className={cn(
-          "h-full transition-all duration-300 overflow-hidden", 
+          "h-full transition-all duration-300 overflow-hidden",
           sidebarCollapsed ? "p-3" : "pl-6 pr-0 py-6"
         )}>
-          
 
 
-        {/* Logo and Dark Mode Toggle */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-violet-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <SparklesIcon className="w-6 h-6 text-white" />
-            </div>
-            {!sidebarCollapsed && (
-              <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-violet-400 to-purple-500 bg-clip-text text-transparent">
-                  MultiMind
-                </h1>
-                <p className={cn(
-                  "text-sm",
-                  darkMode ? "text-slate-400" : "text-slate-600"
-                )}>
-                  Compare AI models in real-time
-                </p>
+
+          {/* Logo and Dark Mode Toggle */}
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-violet-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <SparklesIcon className="w-6 h-6 text-white" />
               </div>
+              {!sidebarCollapsed && (
+                <div>
+                  <h1 className="text-xl font-bold bg-gradient-to-r from-violet-400 to-purple-500 bg-clip-text text-transparent">
+                    MultiMind
+                  </h1>
+                  <p className={cn(
+                    "text-sm",
+                    darkMode ? "text-slate-400" : "text-slate-600"
+                  )}>
+                    Compare AI models in real-time
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Dark Mode Toggle */}
+            {!sidebarCollapsed && (
+              <button
+                onClick={toggleDarkMode}
+                className={cn(
+                  "p-2 rounded-lg transition-colors mr-2",
+                  darkMode
+                    ? "text-gray-400 hover:text-white hover:bg-slate-700/50"
+                    : "text-gray-600 hover:text-slate-800 hover:bg-slate-200/50"
+                )}
+                title={darkMode ? "Light Mode" : "Dark Mode"}
+              >
+                {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </button>
             )}
           </div>
-          
-          {/* Dark Mode Toggle */}
-          {!sidebarCollapsed && (
-            <button
-              onClick={toggleDarkMode}
-              className={cn(
-                "p-2 rounded-lg transition-colors mr-2",
-                darkMode 
-                  ? "text-gray-400 hover:text-white hover:bg-slate-700/50" 
-                  : "text-gray-600 hover:text-slate-800 hover:bg-slate-200/50"
-              )}
-              title={darkMode ? "Light Mode" : "Dark Mode"}
-            >
-              {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
-          )}
-        </div>
 
           {/* User Info section removed */}
 
-        {/* New Chat Button */}
-        {/* New Chat and History Buttons */}
-        <div className={cn(
-          "flex gap-2 mb-6",
-          sidebarCollapsed ? "flex-col" : "flex-row mr-2"
-        )}>
-          <button 
-            onClick={handleNewChat}
+          {/* New Chat Button */}
+          {/* New Chat and History Buttons */}
+          <div className={cn(
+            "flex gap-2 mb-6",
+            sidebarCollapsed ? "flex-col" : "flex-row mr-2"
+          )}>
+            <button
+              onClick={handleNewChat}
+              className={cn(
+                "bg-gradient-to-r from-violet-600 to-purple-700 text-white rounded-lg py-2 flex items-center justify-center gap-2 hover:from-violet-700 hover:to-purple-800 transition-all duration-200 shadow-lg",
+                sidebarCollapsed ? "w-full px-2" : "flex-1 px-4"
+              )}>
+              <Plus className="w-4 h-4" />
+              {!sidebarCollapsed && <span>New Chat</span>}
+            </button>
+
+            <Link
+              href="/history"
+              className={cn(
+                "bg-gradient-to-r from-violet-600 to-purple-700 text-white rounded-lg py-2 flex items-center justify-center gap-2 hover:from-violet-700 hover:to-purple-800 transition-all duration-200 shadow-lg",
+                sidebarCollapsed ? "w-full px-2" : "flex-1 px-4"
+              )}
+            >
+              <History className="w-4 h-4" />
+              {!sidebarCollapsed && <span>History</span>}
+            </Link>
+          </div>
+          <button
+            onClick={() => setOpen(true)} // opens popup
             className={cn(
-              "bg-gradient-to-r from-violet-600 to-purple-700 text-white rounded-lg py-2 flex items-center justify-center gap-2 hover:from-violet-700 hover:to-purple-800 transition-all duration-200 shadow-lg",
-              sidebarCollapsed ? "w-full px-2" : "flex-1 px-4"
-            )}>
-            <Plus className="w-4 h-4" />
-            {!sidebarCollapsed && <span>New Chat</span>}
-          </button>
-          
-          <Link
-            href="/history"
-            className={cn(
-              "bg-gradient-to-r from-violet-600 to-purple-700 text-white rounded-lg py-2 flex items-center justify-center gap-2 hover:from-violet-700 hover:to-purple-800 transition-all duration-200 shadow-lg",
+              "bg-gradient-to-r from-indigo-600 to-purple-700 text-white rounded-lg py-2 flex items-center justify-center gap-2 hover:from-indigo-700 hover:to-purple-800 transition-all duration-200 shadow-lg",
               sidebarCollapsed ? "w-full px-2" : "flex-1 px-4"
             )}
           >
-            <History className="w-4 h-4" />
-            {!sidebarCollapsed && <span>History</span>}
-          </Link>
-        </div>
-        <button
-    onClick={() => setOpen(true)} // opens popup
-    className={cn(
-      "bg-gradient-to-r from-indigo-600 to-purple-700 text-white rounded-lg py-2 flex items-center justify-center gap-2 hover:from-indigo-700 hover:to-purple-800 transition-all duration-200 shadow-lg",
-      sidebarCollapsed ? "w-full px-2" : "flex-1 px-4"
-    )}
-  >
-    <Plus className="w-4 h-4" />
-    {!sidebarCollapsed && <span>Create Project</span>}
-  </button>
-  
-  
+            <Plus className="w-4 h-4" />
+            {!sidebarCollapsed && <span>Create Project</span>}
+          </button>
 
-          
-      
-        
+
+
+
+
+
 
 
 
@@ -978,14 +977,14 @@ async function handleWebSearch(e: React.FormEvent) {
                   {recentSessions.length > 0 ? (
                     <div>
                       {recentSessions.map((session) => (
-                        <div 
-                          key={session.id} 
+                        <div
+                          key={session.id}
                           className={cn(
                             "py-3 px-3 cursor-pointer transition-colors border-l-2 flex flex-col",
-                            darkMode 
+                            darkMode
                               ? currentSessionId === session.id
                                 ? "bg-gray-700 border-l-white"
-                                : "hover:bg-gray-800 border-l-transparent" 
+                                : "hover:bg-gray-800 border-l-transparent"
                               : currentSessionId === session.id
                                 ? "bg-gray-100 border-l-gray-800"
                                 : "hover:bg-gray-50 border-l-transparent"
@@ -1021,76 +1020,76 @@ async function handleWebSearch(e: React.FormEvent) {
                     </div>
                   )}
                 </div>
-                
+
               </div>
-             {showWebSearch && (
-  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100]">
-    <div className="w-[600px] max-h-[80vh] rounded-2xl p-6 bg-slate-800 text-white relative shadow-2xl overflow-hidden">
-      {/* Close Button */}
-      <button
-        onClick={() => setShowWebSearch(false)}
-        className="absolute top-3 right-3 p-2 rounded-full hover:bg-slate-700"
-      >
-        ✖
-      </button>
+              {showWebSearch && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100]">
+                  <div className="w-[600px] max-h-[80vh] rounded-2xl p-6 bg-slate-800 text-white relative shadow-2xl overflow-hidden">
+                    {/* Close Button */}
+                    <button
+                      onClick={() => setShowWebSearch(false)}
+                      className="absolute top-3 right-3 p-2 rounded-full hover:bg-slate-700"
+                    >
+                      ✖
+                    </button>
 
-      {/* Header */}
-      <div className="mb-4">
-        <h2 className="text-2xl font-semibold flex items-center gap-2">
-          🌐 Web Search
-        </h2>
-        <p className="text-slate-400 text-sm mt-1">
-          Ask anything and get Google-powered answers instantly
-        </p>
-      </div>
+                    {/* Header */}
+                    <div className="mb-4">
+                      <h2 className="text-2xl font-semibold flex items-center gap-2">
+                        🌐 Web Search
+                      </h2>
+                      <p className="text-slate-400 text-sm mt-1">
+                        Ask anything and get Google-powered answers instantly
+                      </p>
+                    </div>
 
-      {/* Search Form */}
-      <form onSubmit={handleWebSearch} className="flex gap-3 mb-4">
-        <input
-          type="text"
-          value={webQuery}
-          onChange={(e) => {
-  setWebQuery(e.target.value);
-  if (e.target.value.trim() === "") {
-    setWebResults(null); // clear old results when input is empty
-  }
-}}
+                    {/* Search Form */}
+                    <form onSubmit={handleWebSearch} className="flex gap-3 mb-4">
+                      <input
+                        type="text"
+                        value={webQuery}
+                        onChange={(e) => {
+                          setWebQuery(e.target.value);
+                          if (e.target.value.trim() === "") {
+                            setWebResults(null); // clear old results when input is empty
+                          }
+                        }}
 
-          placeholder="Search the web..."
-          className="flex-1 px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500 text-white placeholder-slate-400"
-        />
-        <button
-          type="submit"
-          className="px-5 py-3 bg-violet-600 hover:bg-violet-500 rounded-lg text-white font-medium transition-all duration-200"
-        >
-          Search
-        </button>
-        
-        {/* 🔍 Icon Button */}
-        <button
-          type="submit"
-          className="absolute right-2 text-gray-300 hover:text-white"
-          title="Search"
-        >
-          🔍
-        </button>
-      </form>
+                        placeholder="Search the web..."
+                        className="flex-1 px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500 text-white placeholder-slate-400"
+                      />
+                      <button
+                        type="submit"
+                        className="px-5 py-3 bg-violet-600 hover:bg-violet-500 rounded-lg text-white font-medium transition-all duration-200"
+                      >
+                        Search
+                      </button>
 
-      
+                      {/* 🔍 Icon Button */}
+                      <button
+                        type="submit"
+                        className="absolute right-2 text-gray-300 hover:text-white"
+                        title="Search"
+                      >
+                        🔍
+                      </button>
+                    </form>
 
-      {/* Results Area */}
-      <div className="overflow-y-auto bg-slate-700/50 rounded-lg p-4 h-[350px]">
-        {webResults ? (
-          <p className="whitespace-pre-wrap text-sm leading-relaxed">
-            {webResults}
-          </p>
-        ) : (
-          <p className="text-slate-400 text-sm italic">Your results will appear here...</p>
-        )}
-      </div>
-    </div>
-  </div>
-)}
+
+
+                    {/* Results Area */}
+                    <div className="overflow-y-auto bg-slate-700/50 rounded-lg p-4 h-[350px]">
+                      {webResults ? (
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                          {webResults}
+                        </p>
+                      ) : (
+                        <p className="text-slate-400 text-sm italic">Your results will appear here...</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
             </div>
 
@@ -1102,7 +1101,7 @@ async function handleWebSearch(e: React.FormEvent) {
             sidebarCollapsed ? "left-3 right-3" : "left-6 right-6"
           )}>
             <div className="space-y-3">
-              
+
               {/* User Dropdown Button */}
               <div className="flex items-center gap-2 relative" data-dropdown="user-menu">
                 <button
@@ -1137,7 +1136,7 @@ async function handleWebSearch(e: React.FormEvent) {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="py-2">
                       {/* Settings */}
                       <button
@@ -1153,7 +1152,7 @@ async function handleWebSearch(e: React.FormEvent) {
                         </svg>
                         <span>Settings</span>
                       </button>
-                      
+
                       {/* Logout */}
                       <button
                         onClick={() => {
@@ -1170,7 +1169,7 @@ async function handleWebSearch(e: React.FormEvent) {
                     </div>
                   </div>
                 )}
-                
+
                 {!sidebarCollapsed && (
                   <button
                     onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -1183,7 +1182,7 @@ async function handleWebSearch(e: React.FormEvent) {
                   </button>
                 )}
               </div>
-              
+
               {/* Collapse Button - Now below the human button when sidebar is collapsed */}
               {sidebarCollapsed && (
                 <button
@@ -1201,7 +1200,7 @@ async function handleWebSearch(e: React.FormEvent) {
             </div>
           </div>
         </div>
- {open && (
+        {open && (
           <div className="fixed inset-0 z-50 flex items-start">
             <div className="fixed inset-0 bg-black/60" onClick={() => setOpen(false)} />
             <div className="m-8 w-[380px] bg-slate-700/50
@@ -1220,80 +1219,80 @@ async function handleWebSearch(e: React.FormEvent) {
                   ✖
                 </button>
               </div>
-<form
-  onSubmit={async (e) => {
-    e.preventDefault();
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
 
-    const title = (e.currentTarget.elements.namedItem("title") as HTMLInputElement)?.value;
-    const description = (e.currentTarget.elements.namedItem("description") as HTMLTextAreaElement)?.value;
+                  const title = (e.currentTarget.elements.namedItem("title") as HTMLInputElement)?.value;
+                  const description = (e.currentTarget.elements.namedItem("description") as HTMLTextAreaElement)?.value;
 
-    try {
-      const res = await fetch("/api/create-project", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, description }),
-      });
+                  try {
+                    const res = await fetch("/api/create-project", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ title, description }),
+                    });
 
-      const data = await res.json();
+                    const data = await res.json();
 
-      if (data.success) {
-        alert(`✅ Project created: ${data.result.project_name}`);
-      } else {
-        alert("❌ Failed to create project");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error connecting to AI");
-    }
+                    if (data.success) {
+                      alert(`✅ Project created: ${data.result.project_name}`);
+                    } else {
+                      alert("❌ Failed to create project");
+                    }
+                  } catch (err) {
+                    console.error(err);
+                    alert("Error connecting to AI");
+                  }
 
-    setOpen(false);
-  }}
-  className="mt-4 flex flex-col gap-4"
->
-  <div>
-    <label className="block text-sm text-slate-300 mb-1">Project Title</label>
-    <input
-      name="title"
-      placeholder="Enter project title"
-      className="w-full p-2 rounded bg-slate-700 border border-slate-600 text-white focus:outline-none"
-    />
-  </div>
+                  setOpen(false);
+                }}
+                className="mt-4 flex flex-col gap-4"
+              >
+                <div>
+                  <label className="block text-sm text-slate-300 mb-1">Project Title</label>
+                  <input
+                    name="title"
+                    placeholder="Enter project title"
+                    className="w-full p-2 rounded bg-slate-700 border border-slate-600 text-white focus:outline-none"
+                  />
+                </div>
 
-  <div>
-    <label className="block text-sm text-slate-300 mb-1">Description</label>
-    <textarea
-      name="description"
-      placeholder="Short project description"
-      className="w-full p-2 rounded bg-slate-700 border border-slate-600 text-white focus:outline-none h-28"
-    />
-  </div>
+                <div>
+                  <label className="block text-sm text-slate-300 mb-1">Description</label>
+                  <textarea
+                    name="description"
+                    placeholder="Short project description"
+                    className="w-full p-2 rounded bg-slate-700 border border-slate-600 text-white focus:outline-none h-28"
+                  />
+                </div>
 
-  <div className="flex justify-end gap-2">
-    <button
-      type="button"
-      onClick={() => setOpen(false)}
-      className="px-4 py-2 rounded bg-slate-700 hover:bg-slate-600"
-    >
-      Cancel
-    </button>
-    <button
-      type="submit"
-      className="px-4 py-2 rounded bg-purple-500 hover:bg-purple-600 text-white"
-    >
-      Create Project
-    </button>
-  </div>
-</form>
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    className="px-4 py-2 rounded bg-slate-700 hover:bg-slate-600"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded bg-purple-500 hover:bg-purple-600 text-white"
+                  >
+                    Create Project
+                  </button>
+                </div>
+              </form>
 
             </div>
           </div>
         )}
-    </div>
-    
+      </div>
+
 
       {/* Main Content */}
       <div className={cn(
-        "transition-all duration-300", 
+        "transition-all duration-300",
         isMobile ? "ml-0 p-0" : sidebarCollapsed ? "ml-16 p-6" : "ml-64 p-6"
       )}>
 
@@ -1306,7 +1305,7 @@ async function handleWebSearch(e: React.FormEvent) {
             </div>
             <h2 className="text-4xl font-bold text-white mb-4">Welcome to MultiMind</h2>
             <p className="text-slate-400 text-lg mb-8">Click &quot;All&quot; above to start comparing all AI models</p>
-            <button 
+            <button
               onClick={() => setSelectedModels(AI_MODELS.map(m => m.id))}
               className="px-8 py-3 bg-gradient-to-r from-violet-600 to-purple-700 text-white rounded-xl hover:from-violet-700 hover:to-purple-800 transition-all duration-200 shadow-lg hover:shadow-xl"
             >
@@ -1320,8 +1319,8 @@ async function handleWebSearch(e: React.FormEvent) {
             {isMobile && (
               <div className={cn(
                 "fixed top-0 left-0 right-0 z-30 backdrop-blur-xl border-b transition-all duration-300",
-                darkMode 
-                  ? "bg-slate-900/90 border-slate-700" 
+                darkMode
+                  ? "bg-slate-900/90 border-slate-700"
                   : "bg-white/90 border-slate-200"
               )}>
                 <div className="flex items-center justify-between px-6 py-4">
@@ -1329,8 +1328,8 @@ async function handleWebSearch(e: React.FormEvent) {
                     onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
                     className={cn(
                       "p-2 rounded-lg transition-all duration-200",
-                      darkMode 
-                        ? "text-white hover:bg-slate-700/60" 
+                      darkMode
+                        ? "text-white hover:bg-slate-700/60"
                         : "text-gray-900 hover:bg-gray-100"
                     )}
                   >
@@ -1355,224 +1354,224 @@ async function handleWebSearch(e: React.FormEvent) {
               isMobile ? "h-screen pt-16 pb-24" : "h-[calc(100vh-70px)] pb-20"
             )}>
               <div className="flex h-full">
-              {AI_MODELS.filter(m => allowedModels.includes(m.id)).map((model) => {
-                const modelId = model.id;
-                const isSelected = selectedModels.includes(modelId);
-                const response = responses.find(r => r.modelId === modelId);
-                const hasMessages = messages.length > 0;
-                
-                return (
-                  <div
-                    key={modelId}
-                    className={cn(
-                      "rounded-md border flex flex-col backdrop-blur-sm transition-all duration-300",
-                      isSelected 
-                        ? darkMode 
-                          ? isMobile 
-                            ? "bg-slate-800 border-slate-600 shadow-xl hover:shadow-2xl w-[90vw] h-full" 
-                            : "bg-slate-800 border-slate-600 shadow-xl hover:shadow-2xl w-[600px] h-full"
-                          : isMobile 
-                            ? "bg-white border-slate-300 shadow-xl hover:shadow-2xl w-[90vw] h-full"
-                            : "bg-white border-slate-300 shadow-xl hover:shadow-2xl w-[600px] h-full"
-                        : darkMode 
-                          ? isMobile 
-                            ? "bg-black border-gray-800 p-0 w-[60px]" 
-                            : "bg-black border-gray-800 p-0 w-[40px]"
-                          : isMobile 
-                            ? "bg-white/50 border-slate-300/50 p-0 w-[60px]"
-                            : "bg-white/50 border-slate-300/50 p-0 w-[40px]"
-                    )}
-                  >
-                    {/* Model Header */}
-                    <div className={cn(
-                      "mb-6",
-                      isSelected ? "" : "flex flex-col items-center justify-start pt-4 h-full"
-                    )}>
-                      {isSelected ? (
-                        <div className={cn(
-                          "flex items-center justify-between w-full transition-all duration-300 px-4 py-3",
-                          darkMode 
-                            ? "bg-slate-700 border-b border-slate-600"
-                            : "bg-white border-b border-gray-200"
-                        )}>
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center justify-center w-12 h-12 -ml-2">
-                              {typeof model?.icon === 'function' ? model.icon(darkMode) : model?.icon}
-                            </div>
-                            <div>
-                              <h3 className={cn(
+                {AI_MODELS.filter(m => allowedModels.includes(m.id)).map((model) => {
+                  const modelId = model.id;
+                  const isSelected = selectedModels.includes(modelId);
+                  const response = responses.find(r => r.modelId === modelId);
+                  const hasMessages = messages.length > 0;
+
+                  return (
+                    <div
+                      key={modelId}
+                      className={cn(
+                        "rounded-md border flex flex-col backdrop-blur-sm transition-all duration-300",
+                        isSelected
+                          ? darkMode
+                            ? isMobile
+                              ? "bg-slate-800 border-slate-600 shadow-xl hover:shadow-2xl w-[90vw] h-full"
+                              : "bg-slate-800 border-slate-600 shadow-xl hover:shadow-2xl w-[600px] h-full"
+                            : isMobile
+                              ? "bg-white border-slate-300 shadow-xl hover:shadow-2xl w-[90vw] h-full"
+                              : "bg-white border-slate-300 shadow-xl hover:shadow-2xl w-[600px] h-full"
+                          : darkMode
+                            ? isMobile
+                              ? "bg-black border-gray-800 p-0 w-[60px]"
+                              : "bg-black border-gray-800 p-0 w-[40px]"
+                            : isMobile
+                              ? "bg-white/50 border-slate-300/50 p-0 w-[60px]"
+                              : "bg-white/50 border-slate-300/50 p-0 w-[40px]"
+                      )}
+                    >
+                      {/* Model Header */}
+                      <div className={cn(
+                        "mb-6",
+                        isSelected ? "" : "flex flex-col items-center justify-start pt-4 h-full"
+                      )}>
+                        {isSelected ? (
+                          <div className={cn(
+                            "flex items-center justify-between w-full transition-all duration-300 px-4 py-3",
+                            darkMode
+                              ? "bg-slate-700 border-b border-slate-600"
+                              : "bg-white border-b border-gray-200"
+                          )}>
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center justify-center w-12 h-12 -ml-2">
+                                {typeof model?.icon === 'function' ? model.icon(darkMode) : model?.icon}
+                              </div>
+                              <div>
+                                <h3 className={cn(
                                   "font-bold text-lg transition-colors duration-300",
                                   darkMode ? "text-white" : "text-gray-900"
-                              )}>{model?.name}</h3>
-                              <p className={cn(
+                                )}>{model?.name}</h3>
+                                <p className={cn(
                                   "text-sm transition-colors duration-300",
                                   darkMode ? "text-gray-300" : "text-gray-600"
-                              )}>{model?.provider}</p>
+                                )}>{model?.provider}</p>
+                              </div>
                             </div>
-                          </div>
-                          
-                          {/* Toggle Switch - Deselect Model */}
-                          <button 
-                            onClick={() => handleModelToggle(modelId)}
-                            className={cn(
-                              "relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50 bg-black border border-slate-700",
-                            )}
-                            title="Deselect Model"
-                          >
-                            <span
-                              className="inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform duration-200 translate-x-6"
-                            />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center gap-4 h-full">
-                          <div className="flex items-center justify-center w-8 h-8">
-                            {typeof model?.icon === 'function' ? model.icon(darkMode) : model?.icon}
-                          </div>
-                          <button 
-                            onClick={() => handleModelToggle(modelId)}
-                            className="w-6 h-6 flex items-center justify-center"
-                            title="Select Model"
-                          >
-                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 17L17 7M17 7H7M17 7V17" />
-                            </svg>
-                          </button>
-                        </div>
-                      )}
-                    </div>
 
-                    {/* Chat Content */}
-                    <div className={cn(
-                      "flex-1 transition-opacity duration-300 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800/50",
-                      isSelected ? "" : "hidden"
-                    )}>
-                      <div className="space-y-4 px-8 py-4">
-                      {hasMessages && isSelected && (
-                        <div className="space-y-6">
-                          {/* Display messages filtered for this specific model */}
-                          {messages.filter(message => 
-                            message.role === 'user' || message.modelId === modelId
-                          ).map((message, index) => (
-                            <div key={message.id || index}>
-                              {message.role === 'user' ? (
-                                /* User Message */
-                                <div className="flex items-start gap-4 mb-6">
-                                  <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                                    <User className="w-4 h-4 text-white" />
-                                  </div>
-                                  <div className="flex-1">
-                                    <p className={cn(
-                                      "text-base leading-relaxed",
-                                      darkMode ? "text-white" : "text-gray-900"
-                                    )}>{message.content}</p>
-                                  </div>
+                            {/* Toggle Switch - Deselect Model */}
+                            <button
+                              onClick={() => handleModelToggle(modelId)}
+                              className={cn(
+                                "relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50 bg-black border border-slate-700",
+                              )}
+                              title="Deselect Model"
+                            >
+                              <span
+                                className="inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform duration-200 translate-x-6"
+                              />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center gap-4 h-full">
+                            <div className="flex items-center justify-center w-8 h-8">
+                              {typeof model?.icon === 'function' ? model.icon(darkMode) : model?.icon}
+                            </div>
+                            <button
+                              onClick={() => handleModelToggle(modelId)}
+                              className="w-6 h-6 flex items-center justify-center"
+                              title="Select Model"
+                            >
+                              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 17L17 7M17 7H7M17 7V17" />
+                              </svg>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Chat Content */}
+                      <div className={cn(
+                        "flex-1 transition-opacity duration-300 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800/50",
+                        isSelected ? "" : "hidden"
+                      )}>
+                        <div className="space-y-4 px-8 py-4">
+                          {hasMessages && isSelected && (
+                            <div className="space-y-6">
+                              {/* Display messages filtered for this specific model */}
+                              {messages.filter(message =>
+                                message.role === 'user' || message.modelId === modelId
+                              ).map((message, index) => (
+                                <div key={message.id || index}>
+                                  {message.role === 'user' ? (
+                                    /* User Message */
+                                    <div className="flex items-start gap-4 mb-6">
+                                      <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                                        <User className="w-4 h-4 text-white" />
+                                      </div>
+                                      <div className="flex-1">
+                                        <p className={cn(
+                                          "text-base leading-relaxed",
+                                          darkMode ? "text-white" : "text-gray-900"
+                                        )}>{message.content}</p>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    /* AI Response Message - Only for this specific model */
+                                    <div className="flex items-start gap-4 mb-6">
+                                      <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 mt-1">
+                                        {typeof model?.icon === 'function' ? model.icon(darkMode) : model?.icon}
+                                      </div>
+                                      <div className="flex-1">
+                                        <div className="prose prose-sm max-w-none">
+                                          <p className={cn(
+                                            "text-base leading-relaxed whitespace-pre-wrap",
+                                            darkMode ? "text-white" : "text-gray-900"
+                                          )}>{message.content}</p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
-                              ) : (
-                                /* AI Response Message - Only for this specific model */
-                                <div className="flex items-start gap-4 mb-6">
+                              ))}
+
+                              {/* Current AI Response (for the latest user message) */}
+                              {messages.length > 0 && messages[messages.length - 1]?.role === 'user' && (
+                                <div className="flex items-start gap-4">
                                   <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 mt-1">
                                     {typeof model?.icon === 'function' ? model.icon(darkMode) : model?.icon}
                                   </div>
                                   <div className="flex-1">
-                                    <div className="prose prose-sm max-w-none">
+                                    {response?.isLoading ? (
+                                      <div className={cn(
+                                        "flex items-center gap-2",
+                                        darkMode ? "text-gray-300" : "text-gray-600"
+                                      )}>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+                                        <span className="text-sm">Thinking...</span>
+                                      </div>
+                                    ) : response?.error ? (
+                                      <p className="text-red-600 text-sm">{response.error}</p>
+                                    ) : response?.content ? (
+                                      <div className="prose prose-sm max-w-none">
+                                        <p className={cn(
+                                          "text-base leading-relaxed whitespace-pre-wrap",
+                                          darkMode ? "text-white" : "text-gray-900"
+                                        )}>{response.content}</p>
+                                      </div>
+                                    ) : (
                                       <p className={cn(
-                                        "text-base leading-relaxed whitespace-pre-wrap",
-                                        darkMode ? "text-white" : "text-gray-900"
-                                      )}>{message.content}</p>
-                                    </div>
+                                        "text-sm",
+                                        darkMode ? "text-gray-400" : "text-gray-500"
+                                      )}>Ready to respond...</p>
+                                    )}
                                   </div>
                                 </div>
                               )}
                             </div>
-                          ))}
+                          )}
 
-                          {/* Current AI Response (for the latest user message) */}
-                          {messages.length > 0 && messages[messages.length - 1]?.role === 'user' && (
-                            <div className="flex items-start gap-4">
-                              <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 mt-1">
+                          {!hasMessages && (
+                            <div className="flex flex-col items-center justify-center py-16">
+                              <div className={cn(
+                                "w-16 h-16 mb-6 flex items-center justify-center transition-all duration-300",
+                                isSelected
+                                  ? "opacity-100"
+                                  : "opacity-40"
+                              )}>
                                 {typeof model?.icon === 'function' ? model.icon(darkMode) : model?.icon}
                               </div>
-                              <div className="flex-1">
-                                {response?.isLoading ? (
-                                  <div className={cn(
-                                    "flex items-center gap-2",
-                                    darkMode ? "text-gray-300" : "text-gray-600"
-                                  )}>
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
-                                    <span className="text-sm">Thinking...</span>
-                                  </div>
-                                ) : response?.error ? (
-                                  <p className="text-red-600 text-sm">{response.error}</p>
-                                ) : response?.content ? (
-                                  <div className="prose prose-sm max-w-none">
-                                    <p className={cn(
-                                      "text-base leading-relaxed whitespace-pre-wrap",
-                                      darkMode ? "text-white" : "text-gray-900"
-                                    )}>{response.content}</p>
-                                  </div>
-                                ) : (
-                                  <p className={cn(
-                                    "text-sm",
-                                    darkMode ? "text-gray-400" : "text-gray-500"
-                                  )}>Ready to respond...</p>
-                                )}
-                              </div>
+                              <h3 className={cn(
+                                "text-2xl font-semibold mb-3 transition-colors duration-300",
+                                isSelected
+                                  ? darkMode ? "text-white" : "text-gray-900"
+                                  : "text-gray-400"
+                              )}>
+                                {/* remove DeepSeek greeting so it's consistent */}
+                                {model?.name === "GPT-5" && "Hi, I'm GPT-5."}
+                                {model?.name === "Claude Sonnet 4" && "Hi maher, how are you?"}
+                                {model?.name === "Gemini" && "Hello, Maherunnisa"}
+                              </h3>
+                              <p className={cn(
+                                "text-base text-center max-w-md transition-colors duration-300",
+                                isSelected
+                                  ? darkMode ? "text-gray-300" : "text-gray-600"
+                                  : "text-gray-400"
+                              )}>
+                                {isSelected ? "How can I help you today?" : "Model disabled"}
+                              </p>
                             </div>
                           )}
                         </div>
-                      )}
-
-                      {!hasMessages && (
-                        <div className="flex flex-col items-center justify-center py-16">
-                          <div className={cn(
-                            "w-16 h-16 mb-6 flex items-center justify-center transition-all duration-300",
-                            isSelected 
-                              ? "opacity-100"
-                              : "opacity-40"
-                          )}>
-                            {typeof model?.icon === 'function' ? model.icon(darkMode) : model?.icon}
-                          </div>
-                          <h3 className={cn(
-                            "text-2xl font-semibold mb-3 transition-colors duration-300",
-                            isSelected
-                              ? darkMode ? "text-white" : "text-gray-900"
-                              : "text-gray-400"
-                          )}>
-                                                        {/* remove DeepSeek greeting so it's consistent */}
-                            {model?.name === "GPT-5" && "Hi, I'm GPT-5."}
-                            {model?.name === "Claude Sonnet 4" && "Hi maher, how are you?"}
-                            {model?.name === "Gemini" && "Hello, Maherunnisa"}
-                          </h3>
-                          <p className={cn(
-                            "text-base text-center max-w-md transition-colors duration-300",
-                            isSelected
-                              ? darkMode ? "text-gray-300" : "text-gray-600"
-                              : "text-gray-400"
-                          )}>
-                            {isSelected ? "How can I help you today?" : "Model disabled"}
-                          </p>
-                        </div>
-                      )}
                       </div>
+
+
                     </div>
-
-
-                  </div>
-                );
-              })}
+                  );
+                })}
               </div>
             </div>
-            
+
 
             {/* Bottom Message Input */}
             <div className={cn(
               "fixed backdrop-blur-xl shadow-2xl transition-all duration-300 border-2 z-10 max-w-4xl mx-auto",
-              darkMode 
-                ? "bg-slate-800/90 border-slate-600" 
+              darkMode
+                ? "bg-slate-800/90 border-slate-600"
                 : "bg-white/95 border-slate-300",
-              isMobile 
-                ? "bottom-0 left-0 right-0 rounded-t-2xl" 
+              isMobile
+                ? "bottom-0 left-0 right-0 rounded-t-2xl"
                 : sidebarCollapsed ? "bottom-8 left-20 right-6 rounded-2xl" : "bottom-8 left-72 right-6 rounded-2xl"
             )}>
               <div className="flex items-center p-2">
@@ -1581,51 +1580,51 @@ async function handleWebSearch(e: React.FormEvent) {
                 <div className="flex items-center gap-1 mr-2">
                   <div className="relative">
                     <button
-  onClick={() => setShowWebSearch(true)}
-  className="p-2 rounded-full hover:bg-slate-700 transition"
-  title="Web Search"
->
-  🔍
-</button>
+                      onClick={() => setShowWebSearch(true)}
+                      className="p-2 rounded-full hover:bg-slate-700 transition"
+                      title="Web Search"
+                    >
+                      🔍
+                    </button>
 
-                    <button 
+                    <button
                       onClick={() => setShowPhotoOptions(!showPhotoOptions)}
                       className={cn(
                         "p-2 transition-all duration-200 rounded-lg hover:scale-105",
-                        darkMode 
-                          ? "text-white hover:bg-slate-700/60" 
+                        darkMode
+                          ? "text-white hover:bg-slate-700/60"
                           : "text-slate-700 hover:bg-slate-200/80"
                       )}
                       title="Add Photo"
                     >
                       <Plus className="w-5 h-5" />
                     </button>
-                    
+
                     {/* Photo Options Dropdown */}
                     {showPhotoOptions && (
                       <div className={cn(
                         "absolute bottom-full mb-2 left-0 rounded-lg shadow-lg border min-w-[140px] z-50",
-                        darkMode 
-                          ? "bg-slate-800 border-slate-600" 
+                        darkMode
+                          ? "bg-slate-800 border-slate-600"
                           : "bg-white border-slate-200"
                       )}>
                         <button
                           onClick={handleTakePhoto}
                           className={cn(
                             "w-full px-4 py-2 text-left hover:bg-opacity-80 transition-colors rounded-t-lg flex items-center gap-2",
-                            darkMode 
-                              ? "text-white hover:bg-slate-700" 
+                            darkMode
+                              ? "text-white hover:bg-slate-700"
                               : "text-gray-900 hover:bg-slate-100"
                           )}
                         >
-                           Take Photo
+                          Take Photo
                         </button>
                         <button
                           onClick={handleSelectPhoto}
                           className={cn(
                             "w-full px-4 py-2 text-left hover:bg-opacity-80 transition-colors rounded-b-lg flex items-center gap-2",
-                            darkMode 
-                              ? "text-white hover:bg-slate-700" 
+                            darkMode
+                              ? "text-white hover:bg-slate-700"
                               : "text-gray-900 hover:bg-slate-100"
                           )}
                         >
@@ -1634,34 +1633,34 @@ async function handleWebSearch(e: React.FormEvent) {
                       </div>
                     )}
                   </div>
-                  <button 
+                  <button
                     onClick={openFilePicker}
                     className={cn(
                       "p-2 transition-all duration-200 rounded-lg hover:scale-105",
-                      darkMode 
-                        ? "text-white hover:bg-slate-700/60" 
+                      darkMode
+                        ? "text-white hover:bg-slate-700/60"
                         : "text-slate-700 hover:bg-slate-200/80"
                     )}
                     title="Attach Files"
                   >
                     <Paperclip className="w-5 h-5" />
                   </button>
-                  
+
                   {/* Hidden file inputs */}
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
+                  <input
+                    type="file"
+                    ref={fileInputRef}
                     onChange={handleFileAttachment}
-                    className="hidden" 
-                    multiple 
+                    className="hidden"
+                    multiple
                     accept=".pdf,.doc,.docx,.txt,.rtf,.csv,.xlsx,.xls,.ppt,.pptx"
                   />
-                  <input 
-                    type="file" 
-                    ref={imageInputRef} 
+                  <input
+                    type="file"
+                    ref={imageInputRef}
                     onChange={handleImageUpload}
-                    className="hidden" 
-                    multiple 
+                    className="hidden"
+                    multiple
                     accept="image/*"
                   />
                 </div>
@@ -1674,8 +1673,8 @@ async function handleWebSearch(e: React.FormEvent) {
                     "rounded-lg px-2"
                   )}>
                     {attachedFiles.map((file, index) => (
-                      <div 
-                        key={index} 
+                      <div
+                        key={index}
                         className={cn(
                           "flex items-center gap-1 py-1 px-2 rounded-md",
                           darkMode ? "bg-slate-600" : "bg-white border border-slate-200"
@@ -1709,7 +1708,7 @@ async function handleWebSearch(e: React.FormEvent) {
                     ))}
                   </div>
                 )}
-                
+
                 {/* Main Input Field */}
                 <div className="relative flex-grow">
                   <input
@@ -1719,8 +1718,8 @@ async function handleWebSearch(e: React.FormEvent) {
                     placeholder="Ask me anything..."
                     className={cn(
                       "w-full rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50 border-2 transition-all duration-200",
-                      darkMode 
-                        ? "bg-slate-700/60 text-white placeholder-slate-400 border-slate-600 focus:border-violet-500" 
+                      darkMode
+                        ? "bg-slate-700/60 text-white placeholder-slate-400 border-slate-600 focus:border-violet-500"
                         : "bg-slate-50 text-slate-800 placeholder-slate-500 border-slate-300 focus:border-violet-500"
                     )}
                     disabled={selectedModels.length === 0 || isLoading}
@@ -1739,11 +1738,11 @@ async function handleWebSearch(e: React.FormEvent) {
 
                 {/* Right Action Buttons */}
                 <div className="flex items-center gap-1 ml-2">
-                  <button 
+                  <button
                     className={cn(
                       "p-2 transition-all duration-200 rounded-lg hover:scale-105",
-                      darkMode 
-                        ? "text-white hover:bg-slate-700/60" 
+                      darkMode
+                        ? "text-white hover:bg-slate-700/60"
                         : "text-slate-700 hover:bg-slate-200/80"
                     )}
                     title="Voice Input"
@@ -1772,7 +1771,7 @@ async function handleWebSearch(e: React.FormEvent) {
 
       <div ref={messagesEndRef} />
 // ...existing code...
-    
+
 
       {/* Settings Modal */}
       {showSettings && (
@@ -1787,11 +1786,11 @@ async function handleWebSearch(e: React.FormEvent) {
                 <X className="w-5 h-5" />
               </button>
             </div>
-          
+
             {/* Password Change Section */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium text-white">Change Password</h3>
-              
+
               <div className="space-y-3">
                 <input
                   type="password"
@@ -1800,7 +1799,7 @@ async function handleWebSearch(e: React.FormEvent) {
                   onChange={(e) => setPasswordChange(prev => ({ ...prev, current: e.target.value }))}
                   className="w-full bg-slate-700/50 text-white rounded-lg px-4 py-3 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 border-2 border-slate-600"
                 />
-                
+
                 <input
                   type="password"
                   placeholder="New Password"
@@ -1808,7 +1807,7 @@ async function handleWebSearch(e: React.FormEvent) {
                   onChange={(e) => setPasswordChange(prev => ({ ...prev, new: e.target.value }))}
                   className="w-full bg-slate-700/50 text-white rounded-lg px-4 py-3 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 border-2 border-slate-600"
                 />
-                
+
                 <input
                   type="password"
                   placeholder="Confirm New Password"
@@ -1826,69 +1825,72 @@ async function handleWebSearch(e: React.FormEvent) {
                 {passwordLoading ? 'Updating...' : 'Update Password'}
               </button>
               {/* AI Model Preferences */}
-<div className="mt-8 pt-6 border-t border-slate-700">
-  <h3 className="text-lg font-semibold text-white mb-1">Customize your chat AI model preferences</h3>
-  <p className="text-slate-400 text-sm mb-6">
-    Easily update your selections anytime in the settings
-  </p>
+              <div className="mt-8 pt-6 border-t border-slate-700">
+                <h3 className="text-lg font-semibold text-white mb-1">Customize your chat AI model preferences</h3>
+                <p className="text-slate-400 text-sm mb-6">
+                  Easily update your selections anytime in the settings
+                </p>
 
-  {prefLoading ? (
-    <p className="text-slate-300">Loading...</p>
-  ) : (
-    <div className="space-y-5">
-      {AI_MODELS.map((m) => (
-        <div key={m.id} className="flex items-center justify-between">
-          <div className="flex items-start gap-4">
-            <div className="w-7 h-7 flex items-center justify-center mt-0.5">
-              {typeof m.icon === 'function' ? (m.icon(darkMode) as any) : m.icon}
-            </div>
-            <div>
-              <div className="text-white font-medium">{m.name}</div>
-              <div className="text-slate-400 text-sm">
-                {m.description}
-              </div>
-            </div>
-          </div>
+                {prefLoading ? (
+                  <p className="text-slate-300">Loading...</p>
+                ) : (
+                  <div className="space-y-5">
+                    {AI_MODELS.map((m) => (
+                      <div key={m.id} className="flex items-center justify-between">
+                        <div className="flex items-start gap-4">
+                          <div className="w-7 h-7 flex items-center justify-center mt-0.5">
+                            {typeof m.icon === "function"
+                              ? (m.icon(darkMode) as React.ReactNode)
+                              : m.icon}
 
-          {/* iOS-style toggle */}
-          <label className="inline-flex items-center cursor-pointer select-none ml-4">
-    <input
-        type="checkbox"
-        checked={prefSelected.includes(m.id)}
-        onChange={() => togglePrefModel(m.id)}
-        className="sr-only peer"
-    />
-    {/* FIX: Removed space in 'peer-checked:bg-violet-600' */}
-    <span className="w-12 h-7 rounded-full transition-colors duration-200
+                          </div>
+                          <div>
+                            <div className="text-white font-medium">{m.name}</div>
+                            <div className="text-slate-400 text-sm">
+                              {m.description}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* iOS-style toggle */}
+                        <label className="inline-flex items-center cursor-pointer select-none ml-4">
+                          <input
+                            type="checkbox"
+                            checked={prefSelected.includes(m.id)}
+                            onChange={() => togglePrefModel(m.id)}
+                            className="sr-only peer"
+                          />
+                          {/* FIX: Removed space in 'peer-checked:bg-violet-600' */}
+                          <span className="w-12 h-7 rounded-full transition-colors duration-200
         bg-slate-600 peer-checked:bg-violet-600 relative">
-        <span className="absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow
+                            <span className="absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow
             transition-all duration-200 peer-checked:left-6" />
-    </span>
-</label>
-        </div>
-      ))}
-    </div>
-  )}
+                          </span>
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-  {prefError && (
-    <div className="mt-4 bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-      <p className="text-red-400 text-sm">{prefError}</p>
-    </div>
-  )}
-  {prefMessage && (
-    <div className="mt-4 bg-green-500/10 border border-green-500/20 rounded-lg p-3">
-      <p className="text-green-400 text-sm">{prefMessage}</p>
-    </div>
-  )}
+                {prefError && (
+                  <div className="mt-4 bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                    <p className="text-red-400 text-sm">{prefError}</p>
+                  </div>
+                )}
+                {prefMessage && (
+                  <div className="mt-4 bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+                    <p className="text-green-400 text-sm">{prefMessage}</p>
+                  </div>
+                )}
 
-  <button
-    onClick={savePreferences}
-    disabled={prefSaving}
-    className="mt-6 w-full bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg py-3 px-4 font-medium hover:from-violet-600 hover:to-purple-700 disabled:opacity-50 transition-all duration-200"
-  >
-    {prefSaving ? 'Saving...' : 'Update preferences'}
-  </button>
-</div>
+                <button
+                  onClick={savePreferences}
+                  disabled={prefSaving}
+                  className="mt-6 w-full bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg py-3 px-4 font-medium hover:from-violet-600 hover:to-purple-700 disabled:opacity-50 transition-all duration-200"
+                >
+                  {prefSaving ? 'Saving...' : 'Update preferences'}
+                </button>
+              </div>
               {/* Sign Out Button */}
               <div className="mt-6 pt-6 border-t border-slate-600">
                 <button
@@ -1906,8 +1908,8 @@ async function handleWebSearch(e: React.FormEvent) {
           </div>
         </div>
       )}
-      
+
     </div>
-    
+
   );
 }

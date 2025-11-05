@@ -63,19 +63,23 @@ export default function AuthPage() {
   }
 }
  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const { error } = await signInWithGoogle();
-      if (error) throw error;
-      // Supabase will redirect, so no need to push router here
-    } catch (error: unknown) {
-      setError((error as any)?.message || 'Google sign-in failed');
-    } finally {
-      setLoading(false);
+  setLoading(true);
+  setError("");
+  try {
+    const { error } = await signInWithGoogle();
+    if (error) throw error;
+    // Supabase will redirect, so no need to push router here
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      setError(error.message);
+    } else {
+      setError("Google sign-in failed");
     }
-  };
-  
+  } finally {
+    setLoading(false);
+  }
+};
+
 
 
 // Don't render until theme is mounted to prevent hydration issues

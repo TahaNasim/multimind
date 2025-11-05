@@ -46,17 +46,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    const handleGoogleSignIn = async () => {
     setLoading(true);
     setError('');
-    try {
-      const { error } = await signInWithGoogle();
-      if (error) throw error;
-      // Supabase will redirect, so no need to push router here
-    } catch (error: unknown) {
-      setError((error as any)?.message || 'Google sign-in failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-   
+   try {
+  const { error } = await signInWithGoogle();
+  if (error) throw error;
+  // Supabase will redirect, so no need to push router here
+} catch (error: unknown) {
+  if (error instanceof Error) {
+    setError(error.message);
+  } else if (typeof error === "object" && error && "message" in error) {
+    setError(String((error as { message: string }).message));
+  } else {
+    setError("Google sign-in failed");
+  }
+} finally {
+  setLoading(false);
+}
+   };
 
 
   const signUp = async (email: string, password: string, fullName?: string) => {
