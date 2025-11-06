@@ -4,12 +4,12 @@ const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
 const MODEL_MAPPING: { [key: string]: string } = {
-  'gpt-5': 'openai/gpt-5',
-  'claude-4-sonnet': 'anthropic/claude-3.5-sonnet',
+  'gpt-5': 'openai/gpt-oss-20b:free',
+  'claude-4-sonnet': 'mistralai/mistral-small-3.1-24b-instruct:free',
   'google': 'meta-llama/llama-4-maverick:free',
   'deepseek': "deepseek/deepseek-chat",
-  'perplexity':"perplexity/sonar-reasoning-pro",
-  'grok': "mistralai/mistral-medium-3.1"
+  'perplexity':"google/gemma-3n-e2b-it:free",
+  'grok': "alibaba/tongyi-deepresearch-30b-a3b:free"
 };
 
 
