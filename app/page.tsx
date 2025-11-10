@@ -1,8 +1,6 @@
 'use client';
-
-
 import { useState, useRef, useEffect } from 'react';
-import { Send, Plus, Moon, Sun, Image, Paperclip, Mic, Sparkles as SparklesIcon, X, History, LogOut, User, ChevronLeft, ChevronRight, Menu } from 'lucide-react';
+import { Send, Plus, Moon, Sun, Image, Paperclip, Mic, Sparkles as SparklesIcon, X, History, LogOut, User, ChevronLeft, ChevronRight, Menu, Trash2 } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -37,7 +35,6 @@ const ClaudeLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
     }}
   />
 );
-
 const GeminiLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
   <div
     className={className}
@@ -51,7 +48,6 @@ const GeminiLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
     }}
   />
 );
-
 const DeepSeekLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
   <div
     className={className}
@@ -66,7 +62,6 @@ const DeepSeekLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
   />
 );
 // Add these above AI_MODELS in your page.tsx
-
 const PerplexityLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
   <div
     className={className}
@@ -80,7 +75,6 @@ const PerplexityLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
     }}
   />
 );
-
 const GrokLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
   <div
     className={className}
@@ -99,7 +93,6 @@ import { useAuth } from '@/lib/auth-context';
 import { useTheme } from '@/lib/theme-context';
 import { supabase } from '@/lib/supabaseClient';
 import Link from 'next/link';
-
 interface AIModel {
   id: string;
   name: string;
@@ -109,7 +102,6 @@ interface AIModel {
   color: string;
   bgColor: string;
 }
-
 interface Message {
   id: string;
   content: string;
@@ -118,7 +110,6 @@ interface Message {
   modelId?: string;
   isBest?: boolean;
 }
-
 interface ModelResponse {
   modelId: string;
   content: string;
@@ -126,7 +117,6 @@ interface ModelResponse {
   error?: string;
   isBest?: boolean;
 }
-
 const AI_MODELS: AIModel[] = [
   {
     id: 'gpt-5',
@@ -183,13 +173,11 @@ const AI_MODELS: AIModel[] = [
     bgColor: 'bg-orange-500/10'
   }
 ];
-
-
-
 export default function Home() {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+ 
   const [showWebSearch, setShowWebSearch] = useState(false);
   const [webQuery, setWebQuery] = useState("");
   const [webResults, setWebResults] = useState<string | null>(null);
@@ -201,9 +189,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, description }),
       });
-
       const data = await res.json();
-
       if (data.success) {
         console.log("AI-generated project:", data.result);
         alert(`✅ Project created: ${data.result.project_name}`);
@@ -218,11 +204,9 @@ export default function Home() {
       alert("Error connecting to AI");
     }
   };
-
   async function handleWebSearch(e: React.FormEvent) {
     e.preventDefault();
     if (!webQuery) return;
-
     try {
       const res = await fetch(`/api/google-search?q=${encodeURIComponent(webQuery)}`);
       const data = await res.json();
@@ -231,9 +215,6 @@ export default function Home() {
       setWebResults("Error fetching results.");
     }
   }
-
-
-
   const { user, signOut } = useAuth();
   const { darkMode, toggleDarkMode, mounted } = useTheme();
   const [selectedModels, setSelectedModels] = useState<string[]>(AI_MODELS.map(m => m.id));
@@ -242,24 +223,20 @@ export default function Home() {
   const [currentInput, setCurrentInput] = useState('');
   const [responses, setResponses] = useState<ModelResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-
-
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [recentSessions, setRecentSessions] = useState<{ id: string, title: string, firstMessage: string, date: string }[]>([]);
-
+  const [recentSessionsLoading, setRecentSessionsLoading] = useState(true);
+  const [recentSessionsError, setRecentSessionsError] = useState(false);
   // State for file attachments
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [showPhotoOptions, setShowPhotoOptions] = useState(false);
   const [showFilePicker, setShowFilePicker] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
-
-
-
   // Check for mobile screen size and collapse sidebar by default
   useEffect(() => {
     const handleResize = () => {
@@ -269,13 +246,10 @@ export default function Home() {
         setSidebarCollapsed(true);
       }
     };
-
     // Set initial state
     handleResize();
-
     // Add event listener for window resize
     window.addEventListener('resize', handleResize);
-
     // Cleanup
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -287,11 +261,9 @@ export default function Home() {
   const [prefError, setPrefError] = useState('');
   const [prefMessage, setPrefMessage] = useState('');
   const [prefSaving, setPrefSaving] = useState(false);
-
   const togglePrefModel = (id: string) => {
     setPrefSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
-
   const savePreferences = async () => {
     setPrefSaving(true);
     setPrefError('');
@@ -308,15 +280,12 @@ export default function Home() {
     }
   };
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-
   useEffect(() => {
     scrollToBottom();
   }, [messages, responses]);
-
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -327,114 +296,140 @@ export default function Home() {
         }
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showUserDropdown]);
+ useEffect(() => {
+  if (!user) {
+    setRecentSessions([]);
+    setRecentSessionsLoading(false);
+    return;
+  }
 
-  // Load recent chat sessions
-  useEffect(() => {
-    if (user) {
-      loadRecentSessions();
-    }
-  }, [user]);
+  let isMounted = true;
 
-  // Function to load recent chat sessions
-  const loadRecentSessions = async () => {
-    if (!user) return;
-
+  const load = async () => {
+    setRecentSessionsLoading(true);
+    setRecentSessionsError(false);
     try {
-      const { data, error } = await supabase
-        .from('chat_sessions')
-        .select('id, title, updated_at')
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false })
-        .limit(10); // Increased to show more chats like ChatGPT
-
-      if (error) throw error;
-
-      if (data) {
-        // For each session, get the first message
-        const sessionsWithFirstMessage = await Promise.all(
-          data.map(async (session) => {
-            const { data: messageData } = await supabase
-              .from('chat_messages')
-              .select('content')
-              .eq('session_id', session.id)
-              .eq('role', 'user')
-              .order('created_at', { ascending: true })
-              .limit(1)
-              .single();
-
-            // Format the date to show in the UI
-            const updatedAt = new Date(session.updated_at);
-            const today = new Date();
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
-
-            let dateDisplay = '';
-            if (updatedAt.toDateString() === today.toDateString()) {
-              dateDisplay = 'Today';
-            } else if (updatedAt.toDateString() === yesterday.toDateString()) {
-              dateDisplay = 'Yesterday';
-            } else {
-              dateDisplay = updatedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            }
-
-            return {
-              id: session.id,
-              title: session.title,
-              firstMessage: messageData?.content || 'New conversation',
-              date: dateDisplay
-            };
-          })
-        );
-
-        setRecentSessions(sessionsWithFirstMessage);
-      }
-    } catch (error) {
-      console.error('Error loading recent sessions:', error);
+      if (isMounted) await loadRecentSessions();
+    } catch {
+      if (isMounted) setRecentSessionsError(true);
+    } finally {
+      if (isMounted) setRecentSessionsLoading(false);
     }
   };
 
-  // Function to load a specific chat session
+  load();
+
+  return () => {
+    isMounted = false;
+  };
+}, [user]);
+  // Function to load recent chat sessions
+ const loadRecentSessions = async () => {
+  if (!user) {
+    setRecentSessions([]);
+    return;
+  }
+
+  try {
+    // Step 1: Get recent sessions
+    const { data: sessions, error: sessionsError } = await supabase
+      .from('chat_sessions')
+      .select('id, title, updated_at')
+      .eq('user_id', user.id)
+      .order('updated_at', { ascending: false })
+      .limit(15);
+
+    if (sessionsError) {
+      console.error('Sessions error:', sessionsError);
+      setRecentSessionsError(true);
+      return;
+    }
+
+    if (!sessions || sessions.length === 0) {
+      setRecentSessions([]);
+      return;
+    }
+
+    // Step 2: Get first user message for each session
+    const sessionsWithPreview = await Promise.all(
+      sessions.map(async (session) => {
+        const { data: messages, error: msgError } = await supabase
+          .from('chat_messages')
+          .select('content')
+          .eq('session_id', session.id)
+          .eq('role', 'user')
+          .order('timestamp', { ascending: true })  // ← FIXED: was 'created_at'
+          .limit(1);
+
+        if (msgError) {
+          console.error('Message preview error:', msgError);
+          return null;
+        }
+
+        const firstMessage = messages?.[0]?.content || 'No message';
+
+        // Format date
+        const date = new Date(session.updated_at);
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        let displayDate: string;
+        if (diffMins < 1) displayDate = 'Just now';
+        else if (diffMins < 60) displayDate = `${diffMins}m ago`;
+        else if (diffHours < 24) displayDate = `${diffHours}h ago`;
+        else if (diffDays < 7) displayDate = `${diffDays}d ago`;
+        else displayDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+        return {
+          id: session.id,
+          title: session.title || 'New Chat',
+          firstMessage: firstMessage.slice(0, 60) + (firstMessage.length > 60 ? '...' : ''),
+          date: displayDate
+        };
+      })
+    );
+
+    setRecentSessions(sessionsWithPreview.filter(Boolean) as any);
+  } catch (err) {
+    console.error('loadRecentSessions crashed:', err);
+    setRecentSessionsError(true);
+  }
+};
   const loadChatSession = async (sessionId: string) => {
     if (!user) return;
-
     try {
       // Validate session ID
       if (!sessionId) {
         throw new Error('Invalid session ID');
       }
-
       // Set current session ID
       setCurrentSessionId(sessionId);
-
       // Clear current messages and responses
       setMessages([]);
       setResponses([]);
-
       // Load messages for this session
       const { data: messagesData, error: messagesError } = await supabase
         .from('chat_messages')
         .select('id, content, role, timestamp')
         .eq('session_id', sessionId)
         .order('timestamp', { ascending: true });
-
       if (messagesError) {
         console.log('Error fetching messages:', messagesError);
         throw new Error(`Failed to fetch messages: ${messagesError.message}`);
       }
-
       if (!messagesData) {
         throw new Error('No message data returned from database');
       }
-
       if (messagesData) {
         // Load all model responses for all user messages
         const userMessages = messagesData.filter(msg => msg.role === 'user');
         const allResponses = new Map();
-
         // For each user message, load its model responses
         for (const userMsg of userMessages) {
           if (userMsg.id) {
@@ -442,20 +437,16 @@ export default function Home() {
               .from('model_responses')
               .select('model_id, content, is_best')
               .eq('message_id', userMsg.id);
-
             if (!responsesError && responsesData) {
               allResponses.set(userMsg.id, responsesData);
             }
           }
         }
-
         // Create proper conversational flow: user → AI responses → user → AI responses
         const formattedMessages = [];
-
         // Get only user messages and sort them chronologically
         const userMessagesOnly = messagesData.filter(msg => msg.role === 'user')
           .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-
         for (const userMsg of userMessagesOnly) {
           // Add user message
           formattedMessages.push({
@@ -464,7 +455,6 @@ export default function Home() {
             role: 'user' as const,
             timestamp: new Date(userMsg.timestamp)
           });
-
           // Add AI responses for this user message
           if (allResponses.has(userMsg.id)) {
             const responses = allResponses.get(userMsg.id);
@@ -480,9 +470,7 @@ export default function Home() {
             }
           }
         }
-
         setMessages(formattedMessages);
-
         // Set responses for the last user message (for current interaction)
         if (userMessages.length > 0) {
           const lastUserMessage = userMessages[userMessages.length - 1];
@@ -494,9 +482,7 @@ export default function Home() {
               isLoading: false,
               isBest: resp.is_best
             }));
-
             setResponses(formattedResponses);
-
             // Update selected models based on responses
             const modelIds = lastResponses.map((resp: { model_id: string, content: string, is_best?: boolean }) => resp.model_id);
             setSelectedModels(modelIds);
@@ -508,17 +494,14 @@ export default function Home() {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       const errorDetails = error instanceof Error ? (error.stack || '') : JSON.stringify(error);
       console.error(`Error loading chat session: ${errorMessage}`, { error, details: errorDetails });
-
       // Show a user-friendly message
       alert('Failed to load chat session. Please try again.');
     }
   };
-
   // Don't render until theme is mounted to prevent hydration issues
   if (!mounted) {
     return <div className="min-h-screen bg-white dark:bg-gray-900"></div>;
   }
-
   const handleModelToggle = (modelId: string) => {
     setSelectedModels(prev =>
       prev.includes(modelId)
@@ -526,10 +509,8 @@ export default function Home() {
         : [...prev, modelId]
     );
   };
-
   const createNewSession = async () => {
     if (!user) return null;
-
     try {
       const { data, error } = await supabase
         .from('chat_sessions')
@@ -539,7 +520,6 @@ export default function Home() {
         })
         .select()
         .single();
-
       if (error) throw error;
       return data.id;
     } catch (error) {
@@ -547,10 +527,8 @@ export default function Home() {
       return null;
     }
   };
-
   const saveMessageToDatabase = async (message: Message, sessionId: string) => {
     if (!user) return null;
-
     try {
       const { data, error } = await supabase
         .from('chat_messages')
@@ -562,7 +540,6 @@ export default function Home() {
         })
         .select()
         .single();
-
       if (error) throw error;
       return data.id;
     } catch (error) {
@@ -570,7 +547,6 @@ export default function Home() {
       return null;
     }
   };
-
   const saveModelResponseToDatabase = async (messageId: string, modelId: string, content: string, isBest: boolean = false) => {
     try {
       const { error } = await supabase
@@ -581,43 +557,35 @@ export default function Home() {
           content,
           is_best: isBest
         });
-
       if (error) throw error;
     } catch (error) {
       console.error('Error saving model response:', error);
     }
   };
-
   const handleNewChat = async () => {
     setMessages([]);
     setResponses([]);
     setCurrentInput('');
     setSelectedModels(AI_MODELS.map(m => m.id));
     setCurrentSessionId(null);
-
     // Refresh recent sessions list
-    loadRecentSessions();
+    await loadRecentSessions(); // ← Keeps sidebar in sync
   };
-
   const handlePasswordChange = async () => {
     if (passwordChange.new !== passwordChange.confirm) {
       alert('New passwords do not match');
       return;
     }
-
     if (passwordChange.new.length < 6) {
       alert('New password must be at least 6 characters');
       return;
     }
-
     setPasswordLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({
         password: passwordChange.new
       });
-
       if (error) throw error;
-
       alert('Password updated successfully!');
       setPasswordChange({ current: '', new: '', confirm: '' });
       setShowSettings(false);
@@ -628,42 +596,35 @@ export default function Home() {
       setPasswordLoading(false);
     }
   };
-
   const handleSendMessage = async () => {
     if ((!currentInput.trim() && attachedFiles.length === 0) || selectedModels.length === 0 || !user) return;
-
     // Create message content - include file information if files are attached
     let messageContent = currentInput;
     if (attachedFiles.length > 0) {
       const fileNames = attachedFiles.map(file => file.name).join(', ');
       messageContent += `\n[Attached: ${fileNames}]`;
     }
-
     const userMessage: Message = {
       id: Date.now().toString(),
       content: messageContent,
       role: 'user',
       timestamp: new Date()
     };
-
     setMessages(prev => [...prev, userMessage]);
     setCurrentInput('');
     setAttachedFiles([]);
     setIsLoading(true);
-
     // Create or get session
     let sessionId = currentSessionId;
     if (!sessionId) {
       sessionId = await createNewSession();
       setCurrentSessionId(sessionId);
     }
-
     // Save user message to database
     let messageId: string | null = null;
     if (sessionId) {
       messageId = await saveMessageToDatabase(userMessage, sessionId);
     }
-
     // Initialize responses for selected models
     const initialResponses: ModelResponse[] = selectedModels.map(modelId => ({
       modelId,
@@ -671,7 +632,6 @@ export default function Home() {
       isLoading: true
     }));
     setResponses(initialResponses);
-
     try {
       // Make API call to our backend which will call OpenRouter
       // Note: In a real implementation, you would need to handle file uploads
@@ -692,17 +652,13 @@ export default function Home() {
           })) : []
         })
       });
-
       if (!response.ok) {
         throw new Error(`API request failed: ${response.statusText}`);
       }
-
       const data = await response.json();
-
       if (data.error) {
         throw new Error(data.error);
       }
-
       // Map the API responses to our local format
       const results: ModelResponse[] = data.responses.map((resp: { modelId: string; content?: string; error?: string }) => ({
         modelId: resp.modelId,
@@ -710,9 +666,7 @@ export default function Home() {
         isLoading: false,
         error: resp.error
       }));
-
       setResponses(results);
-
       // Save model responses to database
       if (messageId && sessionId) {
         for (const result of results) {
@@ -721,7 +675,6 @@ export default function Home() {
           }
         }
       }
-
       // Update session title if it's the first message
       if (sessionId && messages.length === 0) {
         const title = currentInput.length > 50 ? currentInput.substring(0, 50) + '...' : currentInput;
@@ -729,11 +682,9 @@ export default function Home() {
           .from('chat_sessions')
           .update({ title, updated_at: new Date().toISOString() })
           .eq('id', sessionId);
-
         // Refresh recent sessions list
-        loadRecentSessions();
+        await loadRecentSessions();
       }
-
     } catch (error) {
       console.error('Error getting responses:', error);
       setResponses(prev => prev.map(r => ({
@@ -745,17 +696,13 @@ export default function Home() {
       setIsLoading(false);
     }
   };
-
   // Removed unused functions: handleCopyResponse and handleMarkBest
-
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
-
-
   // Handle file attachment
   const handleFileAttachment = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -770,31 +717,25 @@ export default function Home() {
       const newFiles = Array.from(e.target.files);
       setAttachedFiles(prev => [...prev, ...newFiles]);
       setShowPhotoOptions(false);
-
     }
   };
-
   // Remove attached file
   const removeAttachedFile = (index: number) => {
     setAttachedFiles(prev => prev.filter((_, i) => i !== index));
   };
-
   // Trigger file input click
   const openFilePicker = () => {
     fileInputRef.current?.click();
   };
-
   // Handle photo options
   const handleTakePhoto = () => {
     // TODO: Implement camera functionality
     setShowPhotoOptions(false);
   };
-
   const handleSelectPhoto = () => {
     imageInputRef.current?.click();
     setShowPhotoOptions(false);
   };
-
   // Show auth form if not logged in
   if (!user) {
     return (
@@ -816,7 +757,6 @@ export default function Home() {
               darkMode ? "text-slate-400" : "text-slate-600"
             )}>Sign in to continue</p>
           </div>
-
           {/* Auth Form */}
           <div className={cn(
             "rounded-2xl p-8 backdrop-blur-xl border transition-colors duration-300",
@@ -841,7 +781,6 @@ export default function Home() {
       </div>
     );
   }
-
   return (
     <div className={cn(
       "min-h-screen transition-colors duration-300",
@@ -862,7 +801,6 @@ export default function Home() {
           <Menu className="w-6 h-6" />
         </button>
       )}
-
       {/* Sidebar */}
       <div className={cn(
         "fixed left-0 top-0 h-full backdrop-blur-xl transition-all duration-300 z-40",
@@ -876,9 +814,6 @@ export default function Home() {
           "h-full transition-all duration-300 overflow-hidden",
           sidebarCollapsed ? "p-3" : "pl-6 pr-0 py-6"
         )}>
-
-
-
           {/* Logo and Dark Mode Toggle */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
@@ -899,7 +834,6 @@ export default function Home() {
                 </div>
               )}
             </div>
-
             {/* Dark Mode Toggle */}
             {!sidebarCollapsed && (
               <button
@@ -916,9 +850,7 @@ export default function Home() {
               </button>
             )}
           </div>
-
           {/* User Info section removed */}
-
           {/* New Chat Button */}
           {/* New Chat and History Buttons */}
           <div className={cn(
@@ -934,7 +866,6 @@ export default function Home() {
               <Plus className="w-4 h-4" />
               {!sidebarCollapsed && <span>New Chat</span>}
             </button>
-
             <Link
               href="/history"
               className={cn(
@@ -956,73 +887,118 @@ export default function Home() {
             <Plus className="w-4 h-4" />
             {!sidebarCollapsed && <span>Create Project</span>}
           </button>
+{/* Recent Chats - WITH LOADING & ERROR STATE */}
+{!sidebarCollapsed && (
+  <div className="mb-6 flex flex-col" style={{ height: 'calc(100vh - 300px)' }}>
+    <h3 className={cn(
+      "text-sm font-medium mb-3 flex-shrink-0 px-3",
+      darkMode ? "text-gray-300" : "text-gray-700"
+    )}>Recent Chats</h3>
 
-
-
-
-
-
-
-
-
-          {/* Recent Chats */}
-          {!sidebarCollapsed && (
-            <div className="mb-6 flex flex-col" style={{ height: 'calc(100vh - 300px)' }}>
-              <h3 className={cn(
-                "text-sm font-medium mb-3 flex-shrink-0 px-3",
-                darkMode ? "text-gray-300" : "text-gray-700"
-              )}>Recent Chats</h3>
-              <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800/50 pr-6">
-                <div className="space-y-1">
-                  {recentSessions.length > 0 ? (
-                    <div>
-                      {recentSessions.map((session) => (
-                        <div
-                          key={session.id}
-                          className={cn(
-                            "py-3 px-3 cursor-pointer transition-colors border-l-2 flex flex-col",
-                            darkMode
-                              ? currentSessionId === session.id
-                                ? "bg-gray-700 border-l-white"
-                                : "hover:bg-gray-800 border-l-transparent"
-                              : currentSessionId === session.id
-                                ? "bg-gray-100 border-l-gray-800"
-                                : "hover:bg-gray-50 border-l-transparent"
-                          )}
-                          onClick={() => loadChatSession(session.id)}
-                        >
-                          <div className="flex justify-between items-center mb-1">
-                            <span className={cn(
-                              "text-sm font-medium truncate flex-1",
-                              darkMode ? "text-gray-200" : "text-gray-800"
-                            )}>{session.title}</span>
-                            <span className={cn(
-                              "text-xs",
-                              darkMode ? "text-gray-400" : "text-gray-500"
-                            )}>{session.date}</span>
-                          </div>
-                          <p className={cn(
-                            "text-xs truncate",
-                            darkMode ? "text-gray-400" : "text-gray-500"
-                          )}>
-                            {session.firstMessage}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className={cn(
-                      "text-center py-4",
+    <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800/50 pr-6">
+      <div className="space-y-1">
+        {recentSessionsLoading ? (
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-violet-500 border-t-transparent"></div>
+            <p className="text-sm text-gray-400 mt-3">Loading your chats...</p>
+          </div>
+        ) : recentSessionsError ? (
+          <div className="text-center py-12">
+            <p className="text-sm text-red-400 mb-3">Failed to load chats</p>
+            <button onClick={loadRecentSessions} className="text-xs underline text-violet-400 hover:text-violet-300">
+              Tap to retry
+            </button>
+          </div>
+        ) : recentSessions.length > 0 ? (
+          <>
+            {recentSessions.map((session) => (
+              <div
+                key={session.id}
+                className={cn(
+                  "group py-3 px-3 cursor-pointer transition-all duration-200 rounded-lg border-l-2 flex items-center justify-between",
+                  darkMode
+                    ? currentSessionId === session.id
+                      ? "bg-gray-700 border-l-violet-500 shadow-lg"
+                      : "hover:bg-gray-800 border-l-transparent"
+                    : currentSessionId === session.id
+                      ? "bg-gray-100 border-l-violet-600 shadow-lg"
+                      : "hover:bg-gray-50 border-l-transparent"
+                )}
+                onClick={() => loadChatSession(session.id)}
+              >
+                <div className="flex-1 min-w-0 pr-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={cn(
+                      "text-sm font-medium truncate flex-1",
+                      darkMode ? "text-gray-100" : "text-gray-800"
+                    )}>
+                      {session.title}
+                    </span>
+                    <span className={cn(
+                      "text-xs ml-3",
                       darkMode ? "text-gray-400" : "text-gray-500"
                     )}>
-                      <p className="text-sm">No conversations yet</p>
-                      <p className="text-xs">Start chatting to see history here</p>
-                    </div>
-                  )}
+                      {session.date}
+                    </span>
+                  </div>
+                  <p className={cn(
+                    "text-xs truncate",
+                    darkMode ? "text-gray-400" : "text-gray-600"
+                  )}>
+                    {session.firstMessage}
+                  </p>
                 </div>
 
+                {/* DELETE BUTTON - NOW WITH PROPER ERROR HANDLING */}
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    if (!confirm('Delete this chat forever?')) return;
+
+                    try {
+                      const { error } = await supabase
+                        .from('chat_sessions')
+                        .delete()
+                        .eq('id', session.id);
+
+                      if (error) throw error;
+
+                      // Success - refresh list
+                      await loadRecentSessions();
+                      if (currentSessionId === session.id) {
+                        handleNewChat();
+                      }
+                    } catch (err) {
+                      console.error('Delete failed:', err);
+                      alert('Failed to delete chat. Try again.');
+                    }
+                  }}
+                  className={cn(
+                    "p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300",
+                    darkMode
+                      ? "hover:bg-red-500/30 text-red-400"
+                      : "hover:bg-red-500/20 text-red-600"
+                  )}
+                  title="Delete chat"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
-              {showWebSearch && (
+            ))}
+          </>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-sm text-gray-400">No conversations yet</p>
+            <p className="text-xs text-gray-500 mt-2">Start a new chat!</p>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+)}
+
+/* WEB SEARCH MODAL - MOVED OUTSIDE THE RECENT CHATS BLOCK */
+{showWebSearch && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100]">
                   <div className="w-[600px] max-h-[80vh] rounded-2xl p-6 bg-slate-800 text-white relative shadow-2xl overflow-hidden">
                     {/* Close Button */}
@@ -1032,7 +1008,6 @@ export default function Home() {
                     >
                       ✖
                     </button>
-
                     {/* Header */}
                     <div className="mb-4">
                       <h2 className="text-2xl font-semibold flex items-center gap-2">
@@ -1042,7 +1017,6 @@ export default function Home() {
                         Ask anything and get Google-powered answers instantly
                       </p>
                     </div>
-
                     {/* Search Form */}
                     <form onSubmit={handleWebSearch} className="flex gap-3 mb-4">
                       <input
@@ -1054,7 +1028,6 @@ export default function Home() {
                             setWebResults(null); // clear old results when input is empty
                           }
                         }}
-
                         placeholder="Search the web..."
                         className="flex-1 px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500 text-white placeholder-slate-400"
                       />
@@ -1064,7 +1037,6 @@ export default function Home() {
                       >
                         Search
                       </button>
-
                       {/* 🔍 Icon Button */}
                       <button
                         type="submit"
@@ -1074,9 +1046,6 @@ export default function Home() {
                         🔍
                       </button>
                     </form>
-
-
-
                     {/* Results Area */}
                     <div className="overflow-y-auto bg-slate-700/50 rounded-lg p-4 h-[350px]">
                       {webResults ? (
@@ -1090,18 +1059,13 @@ export default function Home() {
                   </div>
                 </div>
               )}
-
-            </div>
-
-          )}
-
+            
           {/* Settings Section */}
           <div className={cn(
             "absolute bottom-6 transition-all duration-300",
             sidebarCollapsed ? "left-3 right-3" : "left-6 right-6"
           )}>
             <div className="space-y-3">
-
               {/* User Dropdown Button */}
               <div className="flex items-center gap-2 relative" data-dropdown="user-menu">
                 <button
@@ -1115,7 +1079,6 @@ export default function Home() {
                   <User className="w-4 h-4" />
                   {!sidebarCollapsed && <span className="text-sm">{user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}</span>}
                 </button>
-
                 {/* User Dropdown Menu */}
                 {showUserDropdown && (
                   <div className={cn(
@@ -1136,7 +1099,6 @@ export default function Home() {
                         </div>
                       </div>
                     </div>
-
                     <div className="py-2">
                       {/* Settings */}
                       <button
@@ -1152,7 +1114,6 @@ export default function Home() {
                         </svg>
                         <span>Settings</span>
                       </button>
-
                       {/* Logout */}
                       <button
                         onClick={() => {
@@ -1169,7 +1130,6 @@ export default function Home() {
                     </div>
                   </div>
                 )}
-
                 {!sidebarCollapsed && (
                   <button
                     onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -1182,7 +1142,6 @@ export default function Home() {
                   </button>
                 )}
               </div>
-
               {/* Collapse Button - Now below the human button when sidebar is collapsed */}
               {sidebarCollapsed && (
                 <button
@@ -1195,8 +1154,6 @@ export default function Home() {
                   <ChevronRight className="w-5 h-5" />
                 </button>
               )}
-
-
             </div>
           </div>
         </div>
@@ -1205,7 +1162,6 @@ export default function Home() {
             <div className="fixed inset-0 bg-black/60" onClick={() => setOpen(false)} />
             <div className="m-8 w-[380px] bg-slate-700/50
  text-white rounded-2xl p-6 shadow-2xl border border-[#3d3269]/50 backdrop-blur-md">
-
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h3 className="text-2xl font-bold">Create New Project</h3>
@@ -1222,19 +1178,15 @@ export default function Home() {
               <form
                 onSubmit={async (e) => {
                   e.preventDefault();
-
                   const title = (e.currentTarget.elements.namedItem("title") as HTMLInputElement)?.value;
                   const description = (e.currentTarget.elements.namedItem("description") as HTMLTextAreaElement)?.value;
-
                   try {
                     const res = await fetch("/api/create-project", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({ title, description }),
                     });
-
                     const data = await res.json();
-
                     if (data.success) {
                       alert(`✅ Project created: ${data.result.project_name}`);
                     } else {
@@ -1244,7 +1196,6 @@ export default function Home() {
                     console.error(err);
                     alert("Error connecting to AI");
                   }
-
                   setOpen(false);
                 }}
                 className="mt-4 flex flex-col gap-4"
@@ -1257,7 +1208,6 @@ export default function Home() {
                     className="w-full p-2 rounded bg-slate-700 border border-slate-600 text-white focus:outline-none"
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm text-slate-300 mb-1">Description</label>
                   <textarea
@@ -1266,7 +1216,6 @@ export default function Home() {
                     className="w-full p-2 rounded bg-slate-700 border border-slate-600 text-white focus:outline-none h-28"
                   />
                 </div>
-
                 <div className="flex justify-end gap-2">
                   <button
                     type="button"
@@ -1283,20 +1232,15 @@ export default function Home() {
                   </button>
                 </div>
               </form>
-
             </div>
           </div>
         )}
       </div>
-
-
       {/* Main Content */}
       <div className={cn(
         "transition-all duration-300",
         isMobile ? "ml-0 p-0" : sidebarCollapsed ? "ml-16 p-6" : "ml-64 p-6"
       )}>
-
-
         {selectedModels.length === 0 ? (
           /* Welcome Screen */
           <div className="text-center py-20">
@@ -1347,7 +1291,6 @@ export default function Home() {
                 </div>
               </div>
             )}
-
             {/* Chat Columns */}
             <div className={cn(
               "overflow-x-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800/50",
@@ -1359,7 +1302,6 @@ export default function Home() {
                   const isSelected = selectedModels.includes(modelId);
                   const response = responses.find(r => r.modelId === modelId);
                   const hasMessages = messages.length > 0;
-
                   return (
                     <div
                       key={modelId}
@@ -1409,7 +1351,6 @@ export default function Home() {
                                 )}>{model?.provider}</p>
                               </div>
                             </div>
-
                             {/* Toggle Switch - Deselect Model */}
                             <button
                               onClick={() => handleModelToggle(modelId)}
@@ -1440,7 +1381,6 @@ export default function Home() {
                           </div>
                         )}
                       </div>
-
                       {/* Chat Content */}
                       <div className={cn(
                         "flex-1 transition-opacity duration-300 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800/50",
@@ -1485,7 +1425,6 @@ export default function Home() {
                                   )}
                                 </div>
                               ))}
-
                               {/* Current AI Response (for the latest user message) */}
                               {messages.length > 0 && messages[messages.length - 1]?.role === 'user' && (
                                 <div className="flex items-start gap-4">
@@ -1521,7 +1460,6 @@ export default function Home() {
                               )}
                             </div>
                           )}
-
                           {!hasMessages && (
                             <div className="flex flex-col items-center justify-center py-16">
                               <div className={cn(
@@ -1555,15 +1493,11 @@ export default function Home() {
                           )}
                         </div>
                       </div>
-
-
                     </div>
                   );
                 })}
               </div>
             </div>
-
-
             {/* Bottom Message Input */}
             <div className={cn(
               "fixed backdrop-blur-xl shadow-2xl transition-all duration-300 border-2 z-10 max-w-4xl mx-auto",
@@ -1576,7 +1510,6 @@ export default function Home() {
             )}>
               <div className="flex items-center p-2">
                 {/* Left Action Buttons */}
-
                 <div className="flex items-center gap-1 mr-2">
                   <div className="relative">
                     <button
@@ -1586,7 +1519,6 @@ export default function Home() {
                     >
                       🔍
                     </button>
-
                     <button
                       onClick={() => setShowPhotoOptions(!showPhotoOptions)}
                       className={cn(
@@ -1599,7 +1531,6 @@ export default function Home() {
                     >
                       <Plus className="w-5 h-5" />
                     </button>
-
                     {/* Photo Options Dropdown */}
                     {showPhotoOptions && (
                       <div className={cn(
@@ -1645,7 +1576,6 @@ export default function Home() {
                   >
                     <Paperclip className="w-5 h-5" />
                   </button>
-
                   {/* Hidden file inputs */}
                   <input
                     type="file"
@@ -1664,7 +1594,6 @@ export default function Home() {
                     accept="image/*"
                   />
                 </div>
-
                 {/* Attached Files Display */}
                 {attachedFiles.length > 0 && (
                   <div className={cn(
@@ -1708,7 +1637,6 @@ export default function Home() {
                     ))}
                   </div>
                 )}
-
                 {/* Main Input Field */}
                 <div className="relative flex-grow">
                   <input
@@ -1735,7 +1663,6 @@ export default function Home() {
                     </div>
                   )}
                 </div>
-
                 {/* Right Action Buttons */}
                 <div className="flex items-center gap-1 ml-2">
                   <button
@@ -1768,11 +1695,8 @@ export default function Home() {
           </>
         )}
       </div>
-
       <div ref={messagesEndRef} />
 // ...existing code...
-
-
       {/* Settings Modal */}
       {showSettings && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
@@ -1786,11 +1710,9 @@ export default function Home() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-
             {/* Password Change Section */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium text-white">Change Password</h3>
-
               <div className="space-y-3">
                 <input
                   type="password"
@@ -1799,7 +1721,6 @@ export default function Home() {
                   onChange={(e) => setPasswordChange(prev => ({ ...prev, current: e.target.value }))}
                   className="w-full bg-slate-700/50 text-white rounded-lg px-4 py-3 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 border-2 border-slate-600"
                 />
-
                 <input
                   type="password"
                   placeholder="New Password"
@@ -1807,7 +1728,6 @@ export default function Home() {
                   onChange={(e) => setPasswordChange(prev => ({ ...prev, new: e.target.value }))}
                   className="w-full bg-slate-700/50 text-white rounded-lg px-4 py-3 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 border-2 border-slate-600"
                 />
-
                 <input
                   type="password"
                   placeholder="Confirm New Password"
@@ -1816,7 +1736,6 @@ export default function Home() {
                   className="w-full bg-slate-700/50 text-white rounded-lg px-4 py-3 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 border-2 border-slate-600"
                 />
               </div>
-
               <button
                 onClick={handlePasswordChange}
                 disabled={passwordLoading || !passwordChange.current || !passwordChange.new || !passwordChange.confirm}
@@ -1830,7 +1749,6 @@ export default function Home() {
                 <p className="text-slate-400 text-sm mb-6">
                   Easily update your selections anytime in the settings
                 </p>
-
                 {prefLoading ? (
                   <p className="text-slate-300">Loading...</p>
                 ) : (
@@ -1842,7 +1760,6 @@ export default function Home() {
                             {typeof m.icon === "function"
                               ? (m.icon(darkMode) as React.ReactNode)
                               : m.icon}
-
                           </div>
                           <div>
                             <div className="text-white font-medium">{m.name}</div>
@@ -1851,7 +1768,6 @@ export default function Home() {
                             </div>
                           </div>
                         </div>
-
                         {/* iOS-style toggle */}
                         <label className="inline-flex items-center cursor-pointer select-none ml-4">
                           <input
@@ -1871,7 +1787,6 @@ export default function Home() {
                     ))}
                   </div>
                 )}
-
                 {prefError && (
                   <div className="mt-4 bg-red-500/10 border border-red-500/20 rounded-lg p-3">
                     <p className="text-red-400 text-sm">{prefError}</p>
@@ -1882,7 +1797,6 @@ export default function Home() {
                     <p className="text-green-400 text-sm">{prefMessage}</p>
                   </div>
                 )}
-
                 <button
                   onClick={savePreferences}
                   disabled={prefSaving}
@@ -1908,8 +1822,6 @@ export default function Home() {
           </div>
         </div>
       )}
-
     </div>
-
   );
 }
