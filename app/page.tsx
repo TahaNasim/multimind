@@ -237,6 +237,8 @@ export default function Home() {
   const [showFilePicker, setShowFilePicker] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recognition, setRecognition] = useState<any>(null);
   // Check for mobile screen size and collapse sidebar by default
   useEffect(() => {
     const handleResize = () => {
@@ -254,6 +256,32 @@ export default function Home() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   const [passwordChange, setPasswordChange] = useState({ current: '', new: '', confirm: '' });
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
+      const SpeechRecognition = (window as any).webkitSpeechRecognition;
+      const recog = new SpeechRecognition();
+      recog.continuous = false;
+      recog.interimResults = false;
+      recog.lang = 'en-US';
+
+      recog.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setCurrentInput(transcript);
+      };
+
+      recog.onerror = (event: any) => {
+        console.error('Speech recognition error', event.error);
+        alert('Voice recognition failed. Try again.');
+        setIsRecording(false);
+      };
+
+      recog.onend = () => {
+        setIsRecording(false);
+      };
+
+      setRecognition(recog);
+    }
+  }, []);
   const [passwordLoading, setPasswordLoading] = useState(false);
   // Preferences state (used in Settings modal)
   const [prefLoading, setPrefLoading] = useState(false);
@@ -1652,6 +1680,13 @@ export default function Home() {
                     )}
                     disabled={selectedModels.length === 0 || isLoading}
                   />
+                  {isRecording && (
+  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+    <span className="text-xs px-2 py-1 rounded-full bg-red-500 text-white animate-pulse">
+      Listening...
+    </span>
+  </div>
+)}
                   {selectedModels.length === 0 && (
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <span className={cn(
@@ -1666,16 +1701,32 @@ export default function Home() {
                 {/* Right Action Buttons */}
                 <div className="flex items-center gap-1 ml-2">
                   <button
-                    className={cn(
-                      "p-2 transition-all duration-200 rounded-lg hover:scale-105",
-                      darkMode
-                        ? "text-white hover:bg-slate-700/60"
-                        : "text-slate-700 hover:bg-slate-200/80"
-                    )}
-                    title="Voice Input"
-                  >
-                    <Mic className="w-5 h-5" />
-                  </button>
+  onClick={() => {
+    if (!recognition) {
+      alert('Voice input not supported on this browser');
+      return;
+    }
+
+    if (isRecording) {
+      recognition.stop();
+      setIsRecording(false);
+    } else {
+      recognition.start();
+      setIsRecording(true);
+    }
+  }}
+  className={cn(
+    "p-2.5 transition-all duration-200 rounded-lg shadow-lg hover:scale-105",
+    isRecording
+      ? "bg-red-500 text-white animate-pulse"
+      : currentInput.trim() && selectedModels.length > 0 && !isLoading
+        ? "bg-green-500 text-white"
+        : "bg-slate-600/50 text-slate-400"
+  )}
+  title={isRecording ? "Stop recording" : "Voice input"}
+>
+  <Mic className={cn("w-5 h-5", isRecording && "animate-bounce")} />
+</button>
                   <button
                     onClick={handleSendMessage}
                     disabled={!currentInput.trim() || selectedModels.length === 0 || isLoading}
