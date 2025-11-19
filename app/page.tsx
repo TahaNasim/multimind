@@ -1,6 +1,27 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
-import { Send, Plus, Moon, Sun, Image, Paperclip, Mic, Sparkles as SparklesIcon, X, History, LogOut, User, ChevronLeft, ChevronRight, Menu, Trash2 } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  History,
+  Image,
+  Lock,           // Here
+  LogOut,
+  Menu,
+  Mic,
+  Moon,
+  Paperclip,
+  Plus,
+  Send,
+  Sparkles as SparklesIcon,
+  Sun,
+  Trash2,
+  User,
+  X,
+  Crown,          // ADD THIS
+  Zap,
+  Check, 
+} from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -86,6 +107,45 @@ const GrokLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
       minWidth: '32px',
       minHeight: '32px'
     }}
+    
+  />
+  
+);
+// Add these with your other logo components (after GrokLogo or before AI_MODELS)
+
+const MetaLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
+  <div
+    className={className}
+    style={{
+      backgroundImage: 'url(/svg-logos/meta.svg)',
+      backgroundSize: 'contain',
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'center',
+    }}
+  />
+);
+
+const QwenLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
+  <div
+    className={className}
+    style={{
+      backgroundImage: 'url(/svg-logos/qwen.svg)',
+      backgroundSize: 'contain',
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'center',
+    }}
+  />
+);
+
+const MistralLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
+  <div
+    className={className}
+    style={{
+      backgroundImage: 'url(/svg-logos/mistral.svg)',
+      backgroundSize: 'contain',
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'center',
+    }}
   />
 );
 import { cn } from '@/lib/utils';
@@ -101,6 +161,8 @@ interface AIModel {
   icon: React.ReactNode | ((darkMode: boolean) => React.ReactNode);
   color: string;
   bgColor: string;
+  isPremium?: boolean;   // ← makes it optional (safe for old models)
+  locked?: boolean;      // ← shows lock icon + blocks toggle
 }
 interface Message {
   id: string;
@@ -118,59 +180,129 @@ interface ModelResponse {
   isBest?: boolean;
 }
 const AI_MODELS: AIModel[] = [
+  // PREMIUM MODELS – ₹499/month (locked)
   {
     id: 'gpt-5',
-    name: 'OpenAI',
-    provider: 'Chatgpt',
-    description: 'Latest GPT model with advanced reasoning',
+    name: 'ChatGPT',
+    provider: 'GPT-5',
+    description: 'Most advanced reasoning & vision',
     icon: (darkMode: boolean) => <GPTLogo className="w-8 h-8" darkMode={darkMode} />,
     color: 'from-violet-500 to-purple-600',
-    bgColor: 'bg-violet-500/10'
+    bgColor: 'bg-violet-500/10',
+    isPremium: true,
+    locked: true
   },
   {
     id: 'claude-4-sonnet',
-    name: 'Anthropic',
-    provider: 'Claude ai',
-    description: 'Fast and efficient reasoning model',
+    name: 'Claude',
+    provider: 'Sonnet 4',
+    description: 'Best reasoning & safety',
     icon: <ClaudeLogo className="w-8 h-8" />,
     color: 'from-cyan-500 to-blue-600',
-    bgColor: 'bg-cyan-500/10'
+    bgColor: 'bg-cyan-500/10',
+    isPremium: true,
+    locked: true
   },
+  {
+    id: 'gemini-pro',
+    name: 'Google',
+    provider: 'Gemini Pro',
+    description: 'Multimodal + real-time web',
+    icon: <GeminiLogo className="w-8 h-8" />,
+    color: 'from-emerald-500 to-teal-600',
+    bgColor: 'bg-emerald-500/10',
+    isPremium: true,
+    locked: true
+  },
+  {
+    id: 'deepseek-pro',
+    name: 'DeepSeek',
+    provider: 'DeepSeek Pro',
+    description: 'Top-tier coding & math',
+    icon: <DeepSeekLogo className="w-8 h-8" />,
+    color: 'from-rose-500 to-pink-600',
+    bgColor: 'bg-rose-500/10',
+    isPremium: true,
+    locked: true
+  },
+  {
+    id: 'perplexity-pro',
+    name: 'Perplexity',
+    provider: 'Perplexity Pro',
+    description: 'Live web search + sources',
+    icon: <PerplexityLogo className="w-8 h-8" />,
+    color: 'from-blue-500 to-indigo-600',
+    bgColor: 'bg-blue-500/10',
+    isPremium: true,
+    locked: true
+  },
+  {
+    id: 'grok-2',
+    name: 'Grok',
+    provider: 'Grok 2',
+    description: 'Real-time X data + humor',
+    icon: <GrokLogo className="w-8 h-8" />,
+    color: 'from-orange-500 to-yellow-600',
+    bgColor: 'bg-orange-500/10',
+    isPremium: true,
+    locked: true
+  },
+
+  // FREE MODELS – always unlocked
   {
     id: 'google',
     name: 'Google',
-    provider: 'Gemini',
-    description: 'Multimodal reasoning capabilities',
+    provider: 'Gemini Flash',
+    description: 'Fast & free multimodal',
     icon: <GeminiLogo className="w-8 h-8" />,
-    color: 'from-emerald-500 to-teal-600',
-    bgColor: 'bg-emerald-500/10'
+    color: 'from-emerald-400 to-teal-500',
+    bgColor: 'bg-emerald-500/10',
+    isPremium: false,
+    locked: false
   },
   {
     id: 'deepseek',
     name: 'DeepSeek',
-    provider: 'DeepSeek',
-    description: 'Advanced reasoning and coding',
+    provider: 'DeepSeek Chat',
+    description: 'Free advanced reasoning',
     icon: <DeepSeekLogo className="w-8 h-8" />,
-    color: 'from-rose-500 to-pink-600',
-    bgColor: 'bg-rose-500/10'
+    color: 'from-rose-400 to-pink-500',
+    bgColor: 'bg-rose-500/10',
+    isPremium: false,
+    locked: false
   },
   {
-    id: 'perplexity',
-    name: 'Perplexity',
-    provider: 'Perplexity AI',
-    description: 'Web-connected, up-to-date answers',
-    icon: <PerplexityLogo className="w-8 h-8" />,
-    color: 'from-blue-500 to-indigo-600',
-    bgColor: 'bg-blue-500/10'
+    id: 'meta-llama',
+    name: 'Meta',
+    provider: 'Llama 3.3 70B',
+    description: 'Open-source 70B – free',
+    icon: <MetaLogo className="w-8 h-8" />,
+    color: 'from-blue-500 to-cyan-600',
+    bgColor: 'bg-blue-500/10',
+    isPremium: false,
+    locked: false
   },
   {
-    id: 'grok',
-    name: 'Grok',
-    provider: 'xAI',
-    description: 'Conversational AI by xAI',
-    icon: <GrokLogo className="w-8 h-8" />,
-    color: 'from-orange-500 to-yellow-600',
-    bgColor: 'bg-orange-500/10'
+    id: 'qwen',
+    name: 'Qwen',
+    provider: 'Qwen 2.5 72B',
+    description: 'Free & powerful',
+    icon: <QwenLogo className="w-8 h-8" />,
+    color: 'from-purple-500 to-pink-600',
+    bgColor: 'bg-purple-500/10',
+    isPremium: false,
+    locked: false
+  },
+  {
+    id: 'mistralai',
+    name: 'Mistral',
+    provider: 'Mistral Small 3.1',
+    description: 'Fast & free European model',
+    icon: <MistralLogo className="w-8 h-8" />,
+    color: 'from-indigo-500 to-purple-600',
+    bgColor: 'bg-indigo-500/10',
+    isPremium: false,
+    locked: false
   }
 ];
 export default function Home() {
@@ -181,6 +313,8 @@ export default function Home() {
   const [showWebSearch, setShowWebSearch] = useState(false);
   const [webQuery, setWebQuery] = useState("");
   const [webResults, setWebResults] = useState<string | null>(null);
+  const [showModelsDropdown, setShowModelsDropdown] = useState(false);
+const [showFreeOnly, setShowFreeOnly] = useState(true);   // true = show free only
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -226,8 +360,20 @@ export default function Home() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  
+
+// These are the 5 REAL free models on OpenRouter (2025)
+const [freeModelIds] = useState<string[]>([
+  'google',      // Gemini Flash / 2.0
+  'meta-llama',  // Llama 3.3 70B (free tier)
+  'qwen',        // Qwen 2.5 72B
+  'mistralai',   // Mistral Small 3.1 / Nemo
+  'deepseek',    // DeepSeek Chat
+]);
   const [showSettings, setShowSettings] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
+const [attemptedPremiumModel, setAttemptedPremiumModel] = useState<string | null>(null);
   const [recentSessions, setRecentSessions] = useState<{ id: string, title: string, firstMessage: string, date: string }[]>([]);
   const [recentSessionsLoading, setRecentSessionsLoading] = useState(true);
   const [recentSessionsError, setRecentSessionsError] = useState(false);
@@ -886,16 +1032,75 @@ const createNewSession = async () => {
               {!sidebarCollapsed && <span>History</span>}
             </Link>
           </div>
-          <button
-            onClick={() => setOpen(true)} // opens popup
-            className={cn(
-              "bg-gradient-to-r from-indigo-600 to-purple-700 text-white rounded-lg py-2 flex items-center justify-center gap-2 hover:from-indigo-700 hover:to-purple-800 transition-all duration-200 shadow-lg",
-              sidebarCollapsed ? "w-full px-2" : "flex-1 px-4"
-            )}
-          >
-            <Plus className="w-4 h-4" />
-            {!sidebarCollapsed && <span>Create Project</span>}
-          </button>
+          {/* Create Project + Models – Models button = History button size */}
+<div className="flex items-center gap-3 mt-4">
+  {/* Create Project – unchanged */}
+  <button
+    onClick={() => setOpen(true)}
+    className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-700 hover:to-purple-800 text-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 transition-all shadow-lg text-sm font-medium"
+  >
+    <Plus className="w-5 h-5" />
+    {!sidebarCollapsed && "Create Project"}
+  </button>
+
+  {/* MODELS BUTTON – NOW IDENTICAL TO HISTORY BUTTON */}
+  <button
+    onClick={() => setShowModelsDropdown(prev => !prev)}
+    className="bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white rounded-xl py-3 px-6 flex items-center justify-center gap-2 transition-all shadow-lg text-sm font-medium whitespace-nowrap"
+  >
+    <Zap className="w-5 h-5" />
+    {!sidebarCollapsed && (
+      <>
+        <span>Models</span>
+        <ChevronRight className={cn("w-4 h-4 transition-transform", showModelsDropdown && "rotate-90")} />
+      </>
+    )}
+  </button>
+</div>
+
+{/* Dropdown – still perfectly centered & beautiful */}
+{showModelsDropdown && !sidebarCollapsed && (
+  <div className="mt-3 flex justify-center">
+    <div className="w-52 bg-slate-800/95 backdrop-blur-xl border border-slate-700 rounded-xl shadow-2xl overflow-hidden">
+      <button
+        onClick={() => {
+          setShowFreeOnly(true);
+          setShowModelsDropdown(false);
+        }}
+        className={cn(
+          "w-full px-5 py-3 text-left flex items-center justify-between text-sm transition-colors",
+          showFreeOnly ? "bg-violet-600/70 text-white" : "hover:bg-slate-700/60 text-slate-300"
+        )}
+      >
+        <span className="flex items-center gap-3">
+          <SparklesIcon className="w-4 h-4 text-green-400" />
+          Free Models
+        </span>
+        {showFreeOnly && <Check className="w-4 h-4 text-green-400" />}
+      </button>
+
+      <button
+        onClick={() => {
+          setShowFreeOnly(false);
+          setShowModelsDropdown(false);
+        }}
+        className={cn(
+          "w-full px-5 py-3 text-left flex items-center justify-between text-sm border-t border-slate-700 transition-colors",
+          !showFreeOnly ? "bg-violet-600/70 text-white" : "hover:bg-slate-700/60 text-slate-300"
+        )}
+      >
+        <span className="flex items-center gap-3">
+          <Crown className="w-4 h-4 text-yellow-400" />
+          Premium Models
+        </span>
+        <span className="text-xs bg-yellow-500/20 text-yellow-300 px-2.5 py-1 rounded-full">
+          ₹499/mo
+        </span>
+      </button>
+    </div>
+  </div>
+)}
+          
 {/* Recent Chats - WITH LOADING & ERROR STATE */}
 {!sidebarCollapsed && (
   <div className="mb-6 flex flex-col" style={{ height: 'calc(100vh - 300px)' }}>
@@ -1245,12 +1450,12 @@ const createNewSession = async () => {
                   >
                     Create Project
                   </button>
-                </div>
+                   </div>
               </form>
             </div>
           </div>
         )}
-      </div>
+        </div>
       {/* Main Content */}
       <div className={cn(
         "transition-all duration-300",
@@ -1312,205 +1517,217 @@ const createNewSession = async () => {
               isMobile ? "h-screen pt-16 pb-24" : "h-[calc(100vh-70px)] pb-20"
             )}>
               <div className="flex h-full">
-                {AI_MODELS.filter(m => allowedModels.includes(m.id)).map((model) => {
+                {AI_MODELS
+  .filter(m => allowedModels.includes(m.id))
+  .filter(m => showFreeOnly ? !m.locked : m.locked)   // ← THIS LINE DOES THE MAGIC
+  .map((model) => {
                   const modelId = model.id;
                   const isSelected = selectedModels.includes(modelId);
                   const response = responses.find(r => r.modelId === modelId);
                   const hasMessages = messages.length > 0;
                   return (
                     <div
-                      key={modelId}
-                      className={cn(
-                        "rounded-md border flex flex-col backdrop-blur-sm transition-all duration-300",
-                        isSelected
-                          ? darkMode
-                            ? isMobile
-                              ? "bg-slate-800 border-slate-600 shadow-xl hover:shadow-2xl w-[90vw] h-full"
-                              : "bg-slate-800 border-slate-600 shadow-xl hover:shadow-2xl w-[600px] h-full"
-                            : isMobile
-                              ? "bg-white border-slate-300 shadow-xl hover:shadow-2xl w-[90vw] h-full"
-                              : "bg-white border-slate-300 shadow-xl hover:shadow-2xl w-[600px] h-full"
-                          : darkMode
-                            ? isMobile
-                              ? "bg-black border-gray-800 p-0 w-[60px]"
-                              : "bg-black border-gray-800 p-0 w-[40px]"
-                            : isMobile
-                              ? "bg-white/50 border-slate-300/50 p-0 w-[60px]"
-                              : "bg-white/50 border-slate-300/50 p-0 w-[40px]"
-                      )}
-                    >
-                      {/* Model Header */}
-                      <div className={cn(
-                        "mb-6",
-                        isSelected ? "" : "flex flex-col items-center justify-start pt-4 h-full"
-                      )}>
-                        {isSelected ? (
-                          <div className={cn(
-                            "flex items-center justify-between w-full transition-all duration-300 px-4 py-3",
-                            darkMode
-                              ? "bg-slate-700 border-b border-slate-600"
-                              : "bg-white border-b border-gray-200"
-                          )}>
-                            <div className="flex items-center gap-3">
-                              <div className="flex items-center justify-center w-12 h-12 -ml-2">
-                                {typeof model?.icon === 'function' ? model.icon(darkMode) : model?.icon}
+                            key={modelId}
+                            className={cn(
+                              "relative flex flex-col transition-all duration-300 backdrop-blur-sm border",
+                              isSelected
+                                ? darkMode
+                                  ? isMobile
+                                    ? "bg-slate-800 border-slate-600 shadow-2xl w-[90vw] h-full"
+                                    : "bg-slate-800 border-slate-600 shadow-2xl w-[600px] h-full"
+                                  : isMobile
+                                    ? "bg-white border-slate-300 shadow-2xl w-[90vw] h-full"
+                                    : "bg-white border-slate-300 shadow-2xl w-[600px] h-full"
+                                : darkMode
+                                  ? "bg-black/90 border-gray-800 w-[60px]"
+                                  : "bg-white/50 border-slate-300/50 w-[60px]"
+                            )}
+                          >
+                            {/* FULL-SCREEN PREMIUM LOCK WHEN COLLAPSED */}
+                                                        {model.locked && !isSelected && (
+                              <div
+                                className="absolute inset-0 bg-black/80 backdrop-blur-sm z-40 flex flex-col items-center justify-center gap-4"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <div className="w-14 h-14 bg-violet-600/30 rounded-xl flex items-center justify-center">
+                                  <Lock className="w-8 h-8 text-violet-300" />
+                                </div>
+                                <p className="text-white font-semibold text-lg">Premium Locked</p>
+                                <p className="text-violet-300 text-3xl font-bold">₹499/mo</p>
                               </div>
-                              <div>
-                                <h3 className={cn(
-                                  "font-bold text-lg transition-colors duration-300",
-                                  darkMode ? "text-white" : "text-gray-900"
-                                )}>{model?.name}</h3>
-                                <p className={cn(
-                                  "text-sm transition-colors duration-300",
-                                  darkMode ? "text-gray-300" : "text-gray-600"
-                                )}>{model?.provider}</p>
-                              </div>
-                            </div>
-                            {/* Toggle Switch - Deselect Model */}
-                            <button
-                              onClick={() => handleModelToggle(modelId)}
-                              className={cn(
-                                "relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50 bg-black border border-slate-700",
-                              )}
-                              title="Deselect Model"
-                            >
-                              <span
-                                className="inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform duration-200 translate-x-6"
-                              />
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex flex-col items-center justify-center gap-4 h-full">
-                            <div className="flex items-center justify-center w-8 h-8">
-                              {typeof model?.icon === 'function' ? model.icon(darkMode) : model?.icon}
-                            </div>
-                            <button
-                              onClick={() => handleModelToggle(modelId)}
-                              className="w-6 h-6 flex items-center justify-center"
-                              title="Select Model"
-                            >
-                              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 17L17 7M17 7H7M17 7V17" />
-                              </svg>
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                      {/* Chat Content */}
-                      <div className={cn(
-                        "flex-1 transition-opacity duration-300 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800/50",
-                        isSelected ? "" : "hidden"
-                      )}>
-                        <div className="space-y-4 px-8 py-4">
-                          {hasMessages && isSelected && (
-                            <div className="space-y-6">
-                              {/* Display messages filtered for this specific model */}
-                              {messages.filter(message =>
-                                message.role === 'user' || message.modelId === modelId
-                              ).map((message, index) => (
-                                <div key={message.id || index}>
-                                  {message.role === 'user' ? (
-                                    /* User Message */
-                                    <div className="flex items-start gap-4 mb-6">
-                                      <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                                        <User className="w-4 h-4 text-white" />
-                                      </div>
-                                      <div className="flex-1">
-                                        <p className={cn(
-                                          "text-base leading-relaxed",
-                                          darkMode ? "text-white" : "text-gray-900"
-                                        )}>{message.content}</p>
-                                      </div>
+                            )}
+                            {/* HEADER */}
+                            <div className="p-4 border-b border-slate-600 z-10 bg-inherit">
+                              {isSelected ? (
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10">
+                                      {typeof model.icon === 'function' ? model.icon(darkMode) : model.icon}
                                     </div>
-                                  ) : (
-                                    /* AI Response Message - Only for this specific model */
-                                    <div className="flex items-start gap-4 mb-6">
+                                    <div>
+                                      <h3 className="font-bold text-lg text-white flex items-center gap-2">
+  {model.name}
+  
+  {/* FREE BADGE – only for free models */}
+  {!model.locked && (
+    <span className="px-3 py-1 text-xs font-bold bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-full shadow-lg animate-pulse">
+      FREE
+    </span>
+  )}
+  
+  {/* PRO BADGE – only for premium (now in violet to match your UI) */}
+  {model.locked && (
+    <span className="px-3 py-1 text-xs font-bold bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-full shadow-lg">
+      Pro · ₹499
+    </span>
+  )}
+</h3>
+                                      <p className="text-sm text-gray-400">{model.provider}</p>
+                                    </div>
+                                  </div>
+
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (model.locked) {
+                                        setAttemptedPremiumModel(model.name);
+                                        setShowPremiumModal(true);
+                                      } else {
+                                        handleModelToggle(modelId);
+                                      }
+                                    }}
+                                    className={cn(
+                                      "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
+                                      isSelected ? "bg-violet-600" : "bg-gray-700",
+                                      model.locked && "opacity-50 cursor-not-allowed"
+                                    )}
+                                    disabled={model.locked}
+                                  >
+                                    <span className={cn(
+                                      "inline-block h-5 w-5 rounded-full bg-white shadow-lg transition-transform",
+                                      isSelected ? "translate-x-6" : "translate-x-1"
+                                    )} />
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex flex-col items-center py-6">
+                                  <div className="w-8 h-8 opacity-60">
+                                    {typeof model.icon === 'function' ? model.icon(darkMode) : model.icon}
+                                  </div>
+                                  {model.locked && <Lock className="w-8 h-8 text-yellow-500 mt-3" />}
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (model.locked) {
+                                        setAttemptedPremiumModel(model.name);
+                                        setShowPremiumModal(true);
+                                      } else {
+                                        handleModelToggle(modelId);
+                                      }
+                                    }}
+                                    className="mt-4 w-8 h-8 flex items-center justify-center"
+                                  >
+                                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* CHAT CONTENT – PREMIUM IS BLOCKED */}
+                            <div className={cn("flex-1 overflow-y-auto", isSelected ? "block" : "hidden")}>
+                                                            {model.locked ? (
+                                <div className="h-full flex items-center justify-center px-6 py-12">
+                                  <div className="text-center max-w-sm">
+                                    <div className="mx-auto w-16 h-16 mb-6 bg-violet-600/20 rounded-2xl flex items-center justify-center">
+                                      <Lock className="w-9 h-9 text-violet-400" />
+                                    </div>
+
+                                    <h3 className="text-2xl font-bold text-white mb-2">
+                                      Premium Model Locked
+                                    </h3>
+                                    <p className="text-gray-400 text-sm mb-8 leading-relaxed">
+                                      Unlock <span className="text-violet-300 font-semibold">{model.name}</span> and all Pro models
+                                    </p>
+
+                                    <div className="mb-8">
+                                      <p className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-purple-400">
+                                        ₹499
+                                      </p>
+                                      <p className="text-gray-500 text-sm mt-1">per month</p>
+                                    </div>
+
+                                    <button
+                                      onClick={() => {
+                                        setAttemptedPremiumModel(model.name);
+                                        setShowPremiumModal(true);
+                                      }}
+                                      className="w-full py-4 px-8 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold text-lg rounded-2xl shadow-xl transform transition-all duration-200 hover:scale-105 active:scale-95"
+                                    >
+                                      Subscribe Now
+                                    </button>
+
+                                    <p className="text-xs text-gray-500 mt-6">
+                                      Instant access • Cancel anytime
+                                    </p>
+                                  </div>
+                                </div>
+                              ) : (
+                                /* ←←← YOUR ORIGINAL MESSAGE RENDERING CODE GOES HERE ←←← */
+                                <div className="space-y-6 p-6">
+                                  {/* Paste your old message rendering code here (the part that was inside the old card) */}
+                                  {/* Example from your code: */}
+                                  {messages.filter(message =>
+                                    message.role === 'user' || message.modelId === modelId
+                                  ).map((message, index) => (
+                                    <div key={message.id || index}>
+                                      {message.role === 'user' ? (
+                                        <div className="flex items-start gap-4 mb-6">
+                                          <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                                            <User className="w-4 h-4 text-white" />
+                                          </div>
+                                          <div className="flex-1">
+                                            <p className={cn("text-base leading-relaxed", darkMode ? "text-white" : "text-gray-900")}>
+                                              {message.content}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <div className="flex items-start gap-4 mb-6">
+                                          <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 mt-1">
+                                            {typeof model.icon === 'function' ? model.icon(darkMode) : model.icon}
+                                          </div>
+                                          <div className="flex-1">
+                                            <p className={cn("text-base leading-relaxed whitespace-pre-wrap", darkMode ? "text-white" : "text-gray-900")}>
+                                              {message.content}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+
+                                  {/* Current response / loading */}
+                                  {responses.find(r => r.modelId === modelId)?.isLoading && (
+                                    <div className="flex items-start gap-4">
                                       <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 mt-1">
-                                        {typeof model?.icon === 'function' ? model.icon(darkMode) : model?.icon}
+                                        {typeof model.icon === 'function' ? model.icon(darkMode) : model.icon}
                                       </div>
                                       <div className="flex-1">
-                                        <div className="prose prose-sm max-w-none">
-                                          <p className={cn(
-                                            "text-base leading-relaxed whitespace-pre-wrap",
-                                            darkMode ? "text-white" : "text-gray-900"
-                                          )}>{message.content}</p>
+                                        <div className="flex items-center gap-2 text-gray-400">
+                                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+                                          <span>Thinking...</span>
                                         </div>
                                       </div>
                                     </div>
                                   )}
                                 </div>
-                              ))}
-                              {/* Current AI Response (for the latest user message) */}
-                              {messages.length > 0 && messages[messages.length - 1]?.role === 'user' && (
-                                <div className="flex items-start gap-4">
-                                  <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 mt-1">
-                                    {typeof model?.icon === 'function' ? model.icon(darkMode) : model?.icon}
-                                  </div>
-                                  <div className="flex-1">
-                                    {response?.isLoading ? (
-                                      <div className={cn(
-                                        "flex items-center gap-2",
-                                        darkMode ? "text-gray-300" : "text-gray-600"
-                                      )}>
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
-                                        <span className="text-sm">Thinking...</span>
-                                      </div>
-                                    ) : response?.error ? (
-                                      <p className="text-red-600 text-sm">{response.error}</p>
-                                    ) : response?.content ? (
-                                      <div className="prose prose-sm max-w-none">
-                                        <p className={cn(
-                                          "text-base leading-relaxed whitespace-pre-wrap",
-                                          darkMode ? "text-white" : "text-gray-900"
-                                        )}>{response.content}</p>
-                                      </div>
-                                    ) : (
-                                      <p className={cn(
-                                        "text-sm",
-                                        darkMode ? "text-gray-400" : "text-gray-500"
-                                      )}>Ready to respond...</p>
-                                    )}
-                                  </div>
-                                </div>
                               )}
                             </div>
-                          )}
-                          {!hasMessages && (
-                            <div className="flex flex-col items-center justify-center py-16">
-                              <div className={cn(
-                                "w-16 h-16 mb-6 flex items-center justify-center transition-all duration-300",
-                                isSelected
-                                  ? "opacity-100"
-                                  : "opacity-40"
-                              )}>
-                                {typeof model?.icon === 'function' ? model.icon(darkMode) : model?.icon}
-                              </div>
-                              <h3 className={cn(
-                                "text-2xl font-semibold mb-3 transition-colors duration-300",
-                                isSelected
-                                  ? darkMode ? "text-white" : "text-gray-900"
-                                  : "text-gray-400"
-                              )}>
-                                {/* remove DeepSeek greeting so it's consistent */}
-                                {model?.name === "GPT-5" && "Hi, I'm GPT-5."}
-                                {model?.name === "Claude Sonnet 4" && "Hi maher, how are you?"}
-                                {model?.name === "Gemini" && "Hello, Maherunnisa"}
-                              </h3>
-                              <p className={cn(
-                                "text-base text-center max-w-md transition-colors duration-300",
-                                isSelected
-                                  ? darkMode ? "text-gray-300" : "text-gray-600"
-                                  : "text-gray-400"
-                              )}>
-                                {isSelected ? "How can I help you today?" : "Model disabled"}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                          </div>
+                        );
+                      })}
               </div>
             </div>
             {/* Bottom Message Input */}
@@ -1860,6 +2077,63 @@ const createNewSession = async () => {
           </div>
         </div>
       )}
+     {/* PREMIUM MODAL – VIOLET THEME */}
+{showPremiumModal && (
+  <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4 animate-fadeIn">
+    <div 
+      className="relative bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 border border-violet-500/30 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden animate-slideUp"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Close button */}
+      <button
+        onClick={() => setShowPremiumModal(false)}
+        className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all z-10"
+      >
+        <X className="w-6 h-6 text-gray-300" />
+      </button>
+
+      <div className="p-8 text-center">
+        {/* Elegant lock icon */}
+        <div className="mx-auto w-20 h-20 bg-violet-600/20 rounded-2xl flex items-center justify-center mb-6">
+          <Lock className="w-12 h-12 text-violet-400" />
+        </div>
+
+        <h2 className="text-3xl font-black text-white mb-3">
+          Unlock All Premium Models
+        </h2>
+        <p className="text-gray-300 text-lg mb-8">
+          Get instant access to <span className="text-violet-300 font-bold">{attemptedPremiumModel || "GPT-5, Claude, Gemini Pro"}</span> and more
+        </p>
+
+        {/* Price – Violet gradient */}
+        <div className="mb-10">
+          <p className="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-purple-400 to-violet-400">
+            ₹499
+          </p>
+          <p className="text-gray-400 text-lg">per month • billed monthly</p>
+        </div>
+
+        {/* Violet Subscribe Button – matches your app perfectly */}
+        <button
+          onClick={() => {
+            // Your payment logic here
+            alert("Payment integration coming soon! 🚀");
+          }}
+          className="w-full py-5 px-8 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold text-xl rounded-2xl shadow-2xl transform transition-all duration-300 hover:scale-105 active:scale-95"
+        >
+          Subscribe Now
+        </button>
+
+        <div className="mt-8 space-y-3 text-sm text-gray-400">
+          <p>Instant activation • No commitment</p>
+          <p>Cancel anytime from settings</p>
+          <p className="text-violet-300">Made with love in India</p>
+        </div>
+      </div>
     </div>
+  </div>
+)}
+    </div>
+
   );
 }
