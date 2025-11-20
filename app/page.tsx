@@ -162,7 +162,7 @@ interface AIModel {
   color: string;
   bgColor: string;
   isPremium?: boolean;   // ← makes it optional (safe for old models)
-  locked?: boolean;      // ← shows lock icon + blocks toggle
+  locked: boolean; // ← REQUIRED, not optional!     // ← shows lock icon + blocks toggle
 }
 interface Message {
   id: string;
@@ -780,17 +780,21 @@ const createNewSession = async () => {
     if (sessionId) {
       messageId = await saveMessageToDatabase(userMessage, sessionId);
     }
-    // Initialize responses for selected models
-    const initialResponses: ModelResponse[] = selectedModels.map(modelId => ({
+       // FIXED VERSION — DO NOT create initial loading states
+    // We will set real responses directly when they arrive
+    setResponses(selectedModels.map(modelId => ({
       modelId,
       content: '',
-      isLoading: true
-    }));
-    setResponses(initialResponses);
+      isLoading: true,
+      error: undefined
+    })));
     try {
       // Make API call to our backend which will call OpenRouter
       // Note: In a real implementation, you would need to handle file uploads
       // This would typically involve FormData and multipart/form-data
+            // ──────── DEBUG VERSION – COPY-PASTE THIS EXACTLY ────────
+      console.log('Sending to backend →', { message: currentInput, models: selectedModels });
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -799,28 +803,40 @@ const createNewSession = async () => {
         body: JSON.stringify({
           message: currentInput,
           models: selectedModels,
-          // In a real implementation, you would upload files and include references
-          attachedFiles: attachedFiles.length > 0 ? attachedFiles.map(file => ({
-            name: file.name,
-            type: file.type,
-            size: file.size
-          })) : []
+          attachedFiles: attachedFiles.length > 0
+            ? attachedFiles.map(file => ({ name: file.name, type: file.type, size: file.size }))
+            : []
         })
       });
+
+      console.log('Backend status →', response.status);
+
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('BACKEND ERROR →', response.status, errorText);
+        throw new Error(`Backend failed: ${response.status}`);
       }
+
       const data = await response.json();
+      console.log('SUCCESS – DATA FROM BACKEND →', data);
+
       if (data.error) {
+        console.error('API ERROR →', data.error);
         throw new Error(data.error);
       }
+      // ──────── END OF DEBUG VERSION ────────
       // Map the API responses to our local format
-      const results: ModelResponse[] = data.responses.map((resp: { modelId: string; content?: string; error?: string }) => ({
+                 // FINAL WORKING VERSION — COPY-PASTE EXACTLY
+      const results: ModelResponse[] = data.responses.map((resp: any) => ({
         modelId: resp.modelId,
-        content: resp.content || '',
+        content: resp.content?.trim() || 'No response',
         isLoading: false,
-        error: resp.error
+        error: resp.error || undefined,
+        isBest: false
       }));
+
+      console.log('FINAL RESULTS →', results); // ← You will see real text here now
+      // END OF FIX
       setResponses(results);
       // Save model responses to database
       if (messageId && sessionId) {
@@ -1517,9 +1533,8 @@ const createNewSession = async () => {
               isMobile ? "h-screen pt-16 pb-24" : "h-[calc(100vh-70px)] pb-20"
             )}>
               <div className="flex h-full">
-                {AI_MODELS
-  .filter(m => allowedModels.includes(m.id))
-  .filter(m => showFreeOnly ? !m.locked : m.locked)   // ← THIS LINE DOES THE MAGIC
+               {AI_MODELS
+  .filter(m => !showFreeOnly || !m.locked)  // ← This is your working filter
   .map((model) => {
                   const modelId = model.id;
                   const isSelected = selectedModels.includes(modelId);
@@ -1678,29 +1693,32 @@ const createNewSession = async () => {
                                 <div className="space-y-6 p-6">
                                   {/* Paste your old message rendering code here (the part that was inside the old card) */}
                                   {/* Example from your code: */}
-                                  {messages.filter(message =>
-                                    message.role === 'user' || message.modelId === modelId
-                                  ).map((message, index) => (
-                                    <div key={message.id || index}>
-                                      {message.role === 'user' ? (
-                                        <div className="flex items-start gap-4 mb-6">
+                                                                  </div>
+                              )}
+                              {/* === FINAL WORKING CHAT RENDERING === */}
+                              <div className="space-y-6 p-6 flex-1 overflow-y-auto">
+                                {/* Past messages from history */}
+                                {messages
+                                  .filter(msg => msg.role === 'user' || msg.modelId === modelId)
+                                  .map((msg, i) => (
+                                    <div key={msg.id || i} className="mb-6">
+                                      {msg.role === 'user' ? (
+                                        <div className="flex items-start gap-4">
                                           <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                                             <User className="w-4 h-4 text-white" />
                                           </div>
                                           <div className="flex-1">
-                                            <p className={cn("text-base leading-relaxed", darkMode ? "text-white" : "text-gray-900")}>
-                                              {message.content}
-                                            </p>
+                                            <p className="text-base leading-relaxed text-white">{msg.content}</p>
                                           </div>
                                         </div>
                                       ) : (
-                                        <div className="flex items-start gap-4 mb-6">
+                                        <div className="flex items-start gap-4">
                                           <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 mt-1">
                                             {typeof model.icon === 'function' ? model.icon(darkMode) : model.icon}
                                           </div>
                                           <div className="flex-1">
-                                            <p className={cn("text-base leading-relaxed whitespace-pre-wrap", darkMode ? "text-white" : "text-gray-900")}>
-                                              {message.content}
+                                            <p className="text-base leading-relaxed whitespace-pre-wrap text-white">
+                                              {msg.content}
                                             </p>
                                           </div>
                                         </div>
@@ -1708,22 +1726,54 @@ const createNewSession = async () => {
                                     </div>
                                   ))}
 
-                                  {/* Current response / loading */}
-                                  {responses.find(r => r.modelId === modelId)?.isLoading && (
-                                    <div className="flex items-start gap-4">
-                                      <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 mt-1">
-                                        {typeof model.icon === 'function' ? model.icon(darkMode) : model.icon}
-                                      </div>
-                                      <div className="flex-1">
+                                {/* CURRENT LIVE RESPONSE */}
+                                {(() => {
+                                  const resp = responses.find(r => r.modelId === modelId);
+                                  if (!resp) return null;
+
+                                  if (resp.isLoading) {
+                                    return (
+                                      <div className="flex items-start gap-4">
+                                        <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 mt-1">
+                                          {typeof model.icon === 'function' ? model.icon(darkMode) : model.icon}
+                                        </div>
                                         <div className="flex items-center gap-2 text-gray-400">
                                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
                                           <span>Thinking...</span>
                                         </div>
                                       </div>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
+                                    );
+                                  }
+
+                                  if (resp.error) {
+                                    return (
+                                      <div className="flex items-start gap-4 text-red-400 text-sm">
+                                        <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 mt-1">
+                                          {typeof model.icon === 'function' ? model.icon(darkMode) : model.icon}
+                                        </div>
+                                        <div>{resp.error}</div>
+                                      </div>
+                                    );
+                                  }
+
+                                  if (resp.content) {
+                                    return (
+                                      <div className="flex items-start gap-4">
+                                        <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 mt-1">
+                                          {typeof model.icon === 'function' ? model.icon(darkMode) : model.icon}
+                                        </div>
+                                        <div className="flex-1">
+                                          <p className="text-base leading-relaxed whitespace-pre-wrap text-white">
+                                            {resp.content}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    );
+                                  }
+
+                                  return null;
+                                })()}
+                              </div>
                             </div>
                           </div>
                         );
