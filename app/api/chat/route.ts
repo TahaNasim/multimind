@@ -1,26 +1,21 @@
 // app/api/chat/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// DO NOT create Supabase client at module level → this kills Netlify build
+// We'll create it only when needed (at request time)
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY!;
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // LIVE FREE MODELS — VERIFIED DEC 5, 2025 ($0.00, UNLIMITED)
-// app/api/chat/route.ts  ←  Replace the whole MODEL_MAPPING object
 const MODEL_MAPPING: { [key: string]: string } = {
-  // THESE 5 ARE 100% FREE + UNLIMITED EVEN WITHOUT $10 CREDITS (Dec 2025)
-  'google'      : 'google/gemma-3n-e2b-it:free',      // ← always free
-  'deepseek'    : 'deepseek/deepseek-chat',             // ← always free
-  'meta-llama'  : 'arcee-ai/trinity-mini:free', // ← has :free suffix
-  'qwen'        : 'amazon/nova-2-lite-v1:free',     // ← has :free suffix
-  'mistralai'   : 'openai/gpt-oss-20b:free',// ← has :free suffix
+  'google'      : 'google/gemma-3n-e2b-it:free',
+  'deepseek'    : 'deepseek/deepseek-chat',
+  'meta-llama'  : 'arcee-ai/trinity-mini:free',
+  'qwen'        : 'amazon/nova-2-lite-v1:free',
+  'mistralai'   : 'openai/gpt-oss-20b:free',
 
-  // Premium (keep unchanged)
+  // Premium
   'gpt-5'          : 'openai/gpt-4o',
   'claude-4-sonnet': 'anthropic/claude-3.5-sonnet',
   'gemini-pro'     : 'google/gemini-pro-1.5',
@@ -46,11 +41,25 @@ export async function OPTIONS() {
 export async function POST(request: NextRequest) {
   const headers = corsHeaders();
 
+  // LAZY CREATE SUPABASE CLIENT — ONLY AT RUNTIME
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('Missing Supabase env vars:', { supabaseUrl: !!supabaseUrl, supabaseKey: !!supabaseKey });
+    return NextResponse.json(
+      { error: 'Server configuration error' },
+      { status: 500, headers }
+    );
+  }
+
+  // Only import and create client when actually needed
+  const { createClient } = await import('@supabase/supabase-js');
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
   try {
     const body = await request.json();
     const { message, models: requestedModels } = body;
-
-    console.log(`[API] Request: "${message}" for models: ${requestedModels.join(', ')}`);
 
     if (!message || !Array.isArray(requestedModels) || requestedModels.length === 0) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400, headers });
@@ -60,17 +69,15 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get('authorization');
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
-    let user = null;
     let isPremium = false;
 
     if (token) {
       const { data } = await supabase.auth.getUser(token);
-      user = data.user;
-      if (user) {
+      if (data.user) {
         const { data: profile } = await supabase
           .from('profiles')
           .select('is_premium')
-          .eq('id', user.id)
+          .eq('id', data.user.id)
           .single();
         isPremium = profile?.is_premium === true;
       }
@@ -81,8 +88,6 @@ export async function POST(request: NextRequest) {
       if (PREMIUM_MODEL_IDS.includes(modelId) && !isPremium) return false;
       return MODEL_MAPPING[modelId] !== undefined;
     });
-
-    console.log(`[API] Allowed models: ${allowedModels.join(', ')}`);
 
     if (allowedModels.length === 0) {
       return NextResponse.json({
@@ -98,8 +103,6 @@ export async function POST(request: NextRequest) {
         try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 20000);
-
-          console.log(`[API] Calling: ${modelId} -> ${openRouterModel}`);
 
           const res = await fetch(OPENROUTER_API_URL, {
             method: 'POST',
@@ -122,8 +125,6 @@ export async function POST(request: NextRequest) {
 
           if (!res.ok) {
             const err = await res.json().catch(() => ({}));
-            console.error(`OpenRouter error [${modelId}]:`, err);
-            // Handle rate limit specifically
             if (err.code === 429) {
               return { modelId, error: 'Rate limit hit. Add $10 credits for unlimited free models.' };
             }
@@ -132,10 +133,8 @@ export async function POST(request: NextRequest) {
 
           const data = await res.json();
           const content = data.choices?.[0]?.message?.content?.trim() || 'No response received.';
-          console.log(`[API] SUCCESS [${modelId}]: ${content.substring(0, 50)}...`);
           return { modelId, content };
         } catch (err: any) {
-          console.error(`Error [${modelId}]:`, err.message);
           return { modelId, error: err.message || 'Request failed' };
         }
       })
