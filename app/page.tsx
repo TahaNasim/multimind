@@ -1,11 +1,13 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
+  Search,
   History,
   Image,
-  Lock,           // Here
+  Lock,
   LogOut,
   Menu,
   Mic,
@@ -18,9 +20,14 @@ import {
   Trash2,
   User,
   X,
-  Crown,          // ADD THIS
+  Crown,
   Zap,
-  Check, 
+  Check,
+  Brain,           // ← for features
+  MessageSquare,   // ← for features
+  Globe,           // ← for features
+  Shield,          // ← for features
+  ArrowRight,      // ← THIS FIXES YOUR ERROR
 } from 'lucide-react';
 import {
   Sheet,
@@ -107,9 +114,9 @@ const GrokLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
       minWidth: '32px',
       minHeight: '32px'
     }}
-    
+
   />
-  
+
 );
 // Add these with your other logo components (after GrokLogo or before AI_MODELS)
 
@@ -180,7 +187,7 @@ interface ModelResponse {
   isBest?: boolean;
 }
 const AI_MODELS: AIModel[] = [
-  // PREMIUM MODELS – ₹499/month (locked)
+  // ==================== PREMIUM MODELS (Locked) ====================
   {
     id: 'gpt-5',
     name: 'ChatGPT',
@@ -205,8 +212,8 @@ const AI_MODELS: AIModel[] = [
   },
   {
     id: 'gemini-pro',
-    name: 'Google',
-    provider: 'Gemini Pro',
+    name: 'Gemini Pro',           // ← Clear name
+    provider: 'Google',
     description: 'Multimodal + real-time web',
     icon: <GeminiLogo className="w-8 h-8" />,
     color: 'from-emerald-500 to-teal-600',
@@ -216,8 +223,8 @@ const AI_MODELS: AIModel[] = [
   },
   {
     id: 'deepseek-pro',
-    name: 'DeepSeek',
-    provider: 'DeepSeek Pro',
+    name: 'DeepSeek Pro',          // ← Clear name
+    provider: 'DeepSeek',
     description: 'Top-tier coding & math',
     icon: <DeepSeekLogo className="w-8 h-8" />,
     color: 'from-rose-500 to-pink-600',
@@ -248,11 +255,11 @@ const AI_MODELS: AIModel[] = [
     locked: true
   },
 
-  // FREE MODELS – always unlocked
+  // ==================== FREE MODELS (Unlocked) ====================
   {
     id: 'google',
-    name: 'Google',
-    provider: 'Gemini Flash',
+    name: 'Gemini Flash',          // ← Free version clearly named
+    provider: 'Google',
     description: 'Fast & free multimodal',
     icon: <GeminiLogo className="w-8 h-8" />,
     color: 'from-emerald-400 to-teal-500',
@@ -262,8 +269,8 @@ const AI_MODELS: AIModel[] = [
   },
   {
     id: 'deepseek',
-    name: 'DeepSeek',
-    provider: 'DeepSeek Chat',
+    name: 'DeepSeek Chat',         // ← Free version clearly named
+    provider: 'DeepSeek',
     description: 'Free advanced reasoning',
     icon: <DeepSeekLogo className="w-8 h-8" />,
     color: 'from-rose-400 to-pink-500',
@@ -309,48 +316,50 @@ export default function Home() {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
- 
+  const router = useRouter();
+
   const [showWebSearch, setShowWebSearch] = useState(false);
   const [webQuery, setWebQuery] = useState("");
   const [webResults, setWebResults] = useState<string | null>(null);
-  const [showModelsDropdown, setShowModelsDropdown] = useState(false);
-const [showFreeOnly, setShowFreeOnly] = useState(true);   // true = show free only
-  const handleCreateProject = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const res = await fetch("/api/create-project", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, description }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        console.log("AI-generated project:", data.result);
-        alert(`✅ Project created: ${data.result.project_name}`);
-        setOpen(false);
-        setTitle("");
-        setDescription("");
-      } else {
-        alert("❌ Failed to create project");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error connecting to AI");
-    }
-  };
+  const [showModelPreferences, setShowModelPreferences] = useState(false);
+  //const [showModelsDropdown, setShowModelsDropdown] = useState(false);
+  // Add this with your other useStates (near the top of Home())
+  const [showFirstTimePreferences, setShowFirstTimePreferences] = useState(false);
+  const [hasSavedPreferences, setHasSavedPreferences] = useState<boolean | null>(null);
+  const [showFreeOnly, setShowFreeOnly] = useState(true);   // true = show free only
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
   async function handleWebSearch(e: React.FormEvent) {
-    e.preventDefault();
-    if (!webQuery) return;
-    try {
-      const res = await fetch(`/api/google-search?q=${encodeURIComponent(webQuery)}`);
-      const data = await res.json();
-      setWebResults(data.answer || "No results found.");
-    } catch (err) {
-      setWebResults("Error fetching results.");
-    }
+  e.preventDefault();
+  if (!webQuery.trim()) return;
+  // Add loading state if desired: setIsWebLoading(true);
+  try {
+    const res = await fetch(`/api/google-search?q=${encodeURIComponent(webQuery)}`);
+    if (!res.ok) throw new Error('Search failed');
+    const data = await res.json();
+    setWebResults(data.answer || data.error || "No results found.");
+  } catch (err) {
+    setWebResults("Error: Could not fetch from Google. Check console.");
+    console.error(err);
+  } finally {
+    // setIsWebLoading(false);
   }
+}
   const { user, signOut } = useAuth();
   const { darkMode, toggleDarkMode, mounted } = useTheme();
+  // ADD THIS — NO RED LINES, WORKS IMMEDIATELY
+useEffect(() => {
+  if (!user) {
+    console.log("No user logged in");
+    return;
+  }
+
+  console.log("USER DEBUG (FINAL):");
+  console.log("• user object:", user);
+  console.log("• user.id:", user.id);
+  console.log("• user.email:", user.email);
+  console.log("• user.user_metadata:", user.user_metadata);
+}, [user]);
   const [selectedModels, setSelectedModels] = useState<string[]>(AI_MODELS.map(m => m.id));
   const [allowedModels, setAllowedModels] = useState<string[]>(AI_MODELS.map(m => m.id));
   const [messages, setMessages] = useState<Message[]>([]);
@@ -360,20 +369,35 @@ const [showFreeOnly, setShowFreeOnly] = useState(true);   // true = show free on
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isPremiumUser, setIsPremiumUser] = useState(false);
   
 
-// These are the 5 REAL free models on OpenRouter (2025)
-const [freeModelIds] = useState<string[]>([
-  'google',      // Gemini Flash / 2.0
-  'meta-llama',  // Llama 3.3 70B (free tier)
-  'qwen',        // Qwen 2.5 72B
-  'mistralai',   // Mistral Small 3.1 / Nemo
-  'deepseek',    // DeepSeek Chat
-]);
+useEffect(() => {
+  if (!user) {
+    setIsPremiumUser(false);
+    return;
+  }
+  supabase
+    .from('profiles')
+    .select('is_premium')
+    .eq('id', user.id)
+    .single()
+    .then(({ data }) => setIsPremiumUser(data?.is_premium === true));
+}, [user]);
+
+
+  // These are the 5 REAL free models on OpenRouter (2025)
+  const [freeModelIds] = useState<string[]>([
+    'google',      // Gemini Flash / 2.0
+    'meta-llama',  // Llama 3.3 70B (free tier)
+    'qwen',        // Qwen 2.5 72B
+    'mistralai',   // Mistral Small 3.1 / Nemo
+    'deepseek',    // DeepSeek Chat
+  ]);
   const [showSettings, setShowSettings] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
-const [attemptedPremiumModel, setAttemptedPremiumModel] = useState<string | null>(null);
+  const [attemptedPremiumModel, setAttemptedPremiumModel] = useState<string | null>(null);
   const [recentSessions, setRecentSessions] = useState<{ id: string, title: string, firstMessage: string, date: string }[]>([]);
   const [recentSessionsLoading, setRecentSessionsLoading] = useState(true);
   const [recentSessionsError, setRecentSessionsError] = useState(false);
@@ -385,6 +409,9 @@ const [attemptedPremiumModel, setAttemptedPremiumModel] = useState<string | null
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recognition, setRecognition] = useState<any>(null);
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [projectName, setProjectName] = useState('');
+  const [systemPrompt, setSystemPrompt] = useState('');
   // Check for mobile screen size and collapse sidebar by default
   useEffect(() => {
     const handleResize = () => {
@@ -402,7 +429,7 @@ const [attemptedPremiumModel, setAttemptedPremiumModel] = useState<string | null
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   const [passwordChange, setPasswordChange] = useState({ current: '', new: '', confirm: '' });
-   // VOICE RECOGNITION SETUP - SILENT & CLEAN
+  // VOICE RECOGNITION SETUP - SILENT & CLEAN
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) return;
@@ -422,7 +449,7 @@ const [attemptedPremiumModel, setAttemptedPremiumModel] = useState<string | null
     recog.onerror = (event: any) => {
       // SILENT LOG — NO CONSOLE.ERROR → NO RED LINE
       console.log('[Voice] Recognition failed:', event.error);
-      
+
       // Only alert on real issues
       if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
         alert('Microphone access denied. Please allow mic in browser settings.');
@@ -437,26 +464,51 @@ const [attemptedPremiumModel, setAttemptedPremiumModel] = useState<string | null
     setRecognition(recog);
   }, []);
   const [passwordLoading, setPasswordLoading] = useState(false);
+  
   // Preferences state (used in Settings modal)
   const [prefLoading, setPrefLoading] = useState(false);
-  const [prefSelected, setPrefSelected] = useState<string[]>(AI_MODELS.map(m => m.id));
+  // REPLACE your current prefSelected line with this:
+  const [prefSelected, setPrefSelected] = useState<string[]>(
+    AI_MODELS.filter(m => !m.locked).map(m => m.id)  // ← all free models pre-selected
+  );
   const [prefError, setPrefError] = useState('');
   const [prefMessage, setPrefMessage] = useState('');
   const [prefSaving, setPrefSaving] = useState(false);
-  const togglePrefModel = (id: string) => {
-    setPrefSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-  };
+ const togglePrefModel = (id: string) => {
+  setPrefSelected(prev =>
+    prev.includes(id)
+      ? prev.filter(x => x !== id)
+      : [...prev, id]
+  );
+};
+
+
+
   const savePreferences = async () => {
+    if (!user || prefSelected.length === 0) return;
+
     setPrefSaving(true);
-    setPrefError('');
     try {
-      // Persist locally for now; adapt to API call if needed
+      const { error } = await supabase
+        .from('user_preferences')
+        .upsert({ user_id: user.id, selected_models: prefSelected }, { onConflict: 'user_id' });
+
+      if (error) throw error;
+
       setAllowedModels(prefSelected);
-      // Update selectedModels to only include allowed ones
       setSelectedModels(prev => prev.filter(id => prefSelected.includes(id)));
-      setPrefMessage('Preferences updated');
+      setHasSavedPreferences(true);
+
+      // Show success message inside modal
+      setShowSuccessMessage(true);
+      setTimeout(() => {
+        setShowSuccessMessage(false);
+        setShowModelPreferences(false);
+        setShowFirstTimePreferences(false);
+      }, 2500); // Auto-close after 2.5 seconds
+
     } catch (err) {
-      setPrefError('Failed to save preferences');
+      console.error(err);
     } finally {
       setPrefSaving(false);
     }
@@ -468,31 +520,121 @@ const [attemptedPremiumModel, setAttemptedPremiumModel] = useState<string | null
   useEffect(() => {
     scrollToBottom();
   }, [messages, responses]);
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showUserDropdown) {
-        const target = event.target as Element;
-        if (!target.closest('[data-dropdown="user-menu"]')) {
-          setShowUserDropdown(false);
-        }
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showUserDropdown]);
- useEffect(() => {
+
+  // Auto-load recent chats when user logs in
+useEffect(() => {
   if (user) {
     loadRecentSessions();
   } else {
     setRecentSessions([]);
   }
 }, [user]);
+// THIS MAKES LIGHT MODE ACTUALLY WORK (add this once)
+useEffect(() => {
+  if (darkMode) {
+    document.documentElement.classList.remove("light");
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+    document.documentElement.classList.add("light");
+  }
+}, [darkMode]);
+  // Check if user has saved preferences → show first-time modal
+  // FIRST-TIME MODEL PREFERENCE POPUP – 100% WORKING VERSION
+  useEffect(() => {
+    if (!user) {
+      // User not logged in → hide popup
+      setShowFirstTimePreferences(false);
+      return;
+    }
+
+    const check = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('user_preferences')
+          .select('selected_models')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('Supabase error:', error);
+        }
+
+        // NO saved preferences → FIRST TIME USER
+        if (!data || !data.selected_models || data.selected_models.length === 0) {
+          console.log('FIRST TIME USER → SHOWING POPUP');
+          setPrefSelected(AI_MODELS.filter(m => !m.locked).map(m => m.id));
+          setShowFirstTimePreferences(true);
+        } else {
+          console.log('User has preferences → no popup');
+          setPrefSelected(data.selected_models);
+          setAllowedModels(data.selected_models);
+          setShowFirstTimePreferences(false);
+        }
+      } catch (err) {
+        console.error('Unexpected error:', err);
+      }
+    };
+
+    check();
+  }, [user]);
   // Function to load recent chat sessions
-// LOAD RECENT CHATS - BULLETPROOF + AUTO REFRESH ON DELETE
+  // LOAD RECENT CHATS - BULLETPROOF + AUTO REFRESH ON DELETE
+  // In page.tsx — REPLACE loadRecentSessions ENTIRELY
+  const deleteChatSession = async (sessionId: string) => {
+  if (!user) return;
+
+  // Confirmation
+  if (!confirm("Delete this chat permanently? This cannot be undone.")) return;
+
+  try {
+    // 1. Delete model responses
+    const { data: messageIds } = await supabase
+      .from('chat_messages')
+      .select('id')
+      .eq('session_id', sessionId);
+
+    if (messageIds && messageIds.length > 0) {
+      await supabase
+        .from('model_responses')
+        .delete()
+        .in('message_id', messageIds.map(m => m.id));
+    }
+
+    // 2. Delete messages
+    await supabase
+      .from('chat_messages')
+      .delete()
+      .eq('session_id', sessionId);
+
+    // 3. Delete the session itself
+    await supabase
+      .from('chat_sessions')
+      .delete()
+      .eq('id', sessionId);
+
+    // 4. If this was the active chat → reset UI
+    if (currentSessionId === sessionId) {
+      handleNewChat();
+    }
+
+    // 5. FORCE REFRESH: Optimistically remove from state + refetch
+    setRecentSessions(prev => prev.filter(s => s.id !== sessionId));
+    
+    // Then re-fetch from DB to be 100% sure (prevents ghost entries)
+    await loadRecentSessions();
+
+  } catch (err: any) {
+    console.error("Delete failed:", err);
+    alert("Failed to delete chat: " + (err.message || "Unknown error"));
+    // Even on error, refetch to sync UI with reality
+    await loadRecentSessions();
+  }
+};
 const loadRecentSessions = async () => {
-  if (!user) {
+  if (!user?.id) {
     setRecentSessions([]);
+    setRecentSessionsLoading(false);
     return;
   }
 
@@ -500,60 +642,68 @@ const loadRecentSessions = async () => {
   setRecentSessionsError(false);
 
   try {
+    // 1. Get all sessions
     const { data: sessions, error: sessionsError } = await supabase
       .from('chat_sessions')
       .select('id, title, updated_at')
       .eq('user_id', user.id)
       .order('updated_at', { ascending: false })
-      .limit(15);
+      .limit(20);
 
     if (sessionsError) throw sessionsError;
     if (!sessions || sessions.length === 0) {
       setRecentSessions([]);
+      setRecentSessionsLoading(false);
       return;
     }
 
-    const sessionsWithPreview = await Promise.all(
-      sessions.map(async (session) => {
-        const { data: messages } = await supabase
-          .from('chat_messages')
-          .select('content')
-          .eq('session_id', session.id)
-          .eq('role', 'user')
-          .order('timestamp', { ascending: true })
-          .limit(1);
+    // 2. Get the FIRST user message from each session (to show preview)
+    const sessionIds = sessions.map(s => s.id);
+    const { data: messages, error: msgError } = await supabase
+      .from('chat_messages')
+      .select('session_id, content')
+      .in('session_id', sessionIds)
+      .eq('role', 'user')
+      .order('timestamp', { ascending: true })
+      .limit(1000); // safe limit
 
-        const firstMessage = messages?.[0]?.content || 'No message';
-        const date = new Date(session.updated_at);
-        const now = new Date();
-        const diffMs = now.getTime() - date.getTime();
-        const diffMins = Math.floor(diffMs / 60000);
-        const diffHours = Math.floor(diffMs / 3600000);
-        const diffDays = Math.floor(diffMs / 86400000);
+    if (msgError) throw msgError;
 
-        let displayDate: string;
-        if (diffMins < 1) displayDate = 'Just now';
-        else if (diffMins < 60) displayDate = `${diffMins}m ago`;
-        else if (diffHours < 24) displayDate = `${diffHours}h ago`;
-        else if (diffDays < 7) displayDate = `${diffDays}d ago`;
-        else displayDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    // Create map: sessionId → first message content
+    const firstMsgMap = new Map<string, string>();
+    messages?.forEach(msg => {
+      if (!firstMsgMap.has(msg.session_id)) {
+        firstMsgMap.set(msg.session_id, msg.content);
+      }
+    });
 
-        return {
-          id: session.id,
-          title: session.title || 'New Chat',
-          firstMessage: firstMessage.slice(0, 60) + (firstMessage.length > 60 ? '...' : ''),
-          date: displayDate
-        };
-      })
-    );
+    // 3. Build final list
+    const formatted = sessions.map(session => ({
+      id: session.id,
+      title: session.title || "New Chat",
+      firstMessage: firstMsgMap.get(session.id) || "No messages yet",
+      date: formatRelativeTime(new Date(session.updated_at))
+    }));
 
-    setRecentSessions(sessionsWithPreview.filter(Boolean) as any);
-  } catch (err: any) {
-    console.error('Failed to load recent chats:', err);
+    setRecentSessions(formatted);
+  } catch (err) {
+    console.error("Failed to load recent chats:", err);
     setRecentSessionsError(true);
   } finally {
     setRecentSessionsLoading(false);
   }
+};
+
+// Helper function — put this anywhere outside the component
+const formatRelativeTime = (date: Date) => {
+  const now = Date.now();
+  const diffInSeconds = Math.floor((now - date.getTime()) / 1000);
+
+  if (diffInSeconds < 60) return "just now";
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  return date.toLocaleDateString();
 };
   const loadChatSession = async (sessionId: string) => {
     if (!user) return;
@@ -657,21 +807,26 @@ const loadRecentSessions = async () => {
     return <div className="min-h-screen bg-white dark:bg-gray-900"></div>;
   }
   const handleModelToggle = (modelId: string) => {
-    setSelectedModels(prev =>
-      prev.includes(modelId)
-        ? prev.filter(id => id !== modelId)
-        : [...prev, modelId]
-    );
-  };
-const createNewSession = async () => {
+  setSelectedModels(prev =>
+    prev.includes(modelId)
+      ? prev.filter(id => id !== modelId)
+      : [...prev, modelId]
+  );
+};
+
+ const createNewSession = async () => {
   if (!user) return null;
+
+  const now = new Date().toISOString();
 
   const { data, error } = await supabase
     .from('chat_sessions')
     .insert({
-      user_id: user.id,
-      title: 'New Chat'
-    })
+  user_id: user.id,
+  title: 'New Chat',
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+})
     .select()
     .single();
 
@@ -680,7 +835,8 @@ const createNewSession = async () => {
     return null;
   }
 
-  return data.id; // ← Real UUID
+  await loadRecentSessions(); // Refresh immediately
+  return data.id;
 };
   const saveMessageToDatabase = async (message: Message, sessionId: string) => {
     if (!user) return null;
@@ -751,122 +907,142 @@ const createNewSession = async () => {
       setPasswordLoading(false);
     }
   };
-  const handleSendMessage = async () => {
-    if ((!currentInput.trim() && attachedFiles.length === 0) || selectedModels.length === 0 || !user) return;
-    // Create message content - include file information if files are attached
-    let messageContent = currentInput;
-    if (attachedFiles.length > 0) {
-      const fileNames = attachedFiles.map(file => file.name).join(', ');
-      messageContent += `\n[Attached: ${fileNames}]`;
+  
+const handleSendMessage = async () => {
+  // ensure there is something to send and user is present
+  if ((!currentInput.trim() && attachedFiles.length === 0) || !user) return;
+
+  const messageText = currentInput.trim();
+
+  // Check if user is premium
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_premium')
+    .eq('id', user.id)
+    .single();
+  const isPremiumUserLocal = profile?.is_premium === true;
+
+  // Only send to allowed models
+  const modelsToSend = selectedModels.filter(id => {
+    const model = AI_MODELS.find(m => m.id === id);
+    return !!model && (!model.locked || isPremiumUserLocal);
+  });
+
+  if (modelsToSend.length === 0) {
+    setShowPremiumModal(true);
+    return;
+  }
+
+  // Add user message to UI
+  const userMessage: Message = {
+    id: Date.now().toString(),
+    content: messageText + (attachedFiles.length > 0 ? `\n[Attached: ${attachedFiles.map(f => f.name).join(', ')}]` : ''),
+    role: 'user',
+    timestamp: new Date()
+  };
+  setMessages(prev => [...prev, userMessage]);
+
+  // Clear input
+  setCurrentInput('');
+  setAttachedFiles([]);
+  setIsLoading(true);
+
+  // Create session if needed
+  let sessionId = currentSessionId;
+  if (!sessionId) {
+    sessionId = await createNewSession();
+    setCurrentSessionId(sessionId);
+  }
+
+  const messageId = sessionId ? await saveMessageToDatabase(userMessage, sessionId) : null;
+
+  // THIS IS THE FIX – refresh recent chats immediately
+  if (sessionId) {
+    await supabase
+      .from('chat_sessions')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', sessionId);
+
+    await loadRecentSessions(); // THIS LINE FIXES YOUR BUG
+  }
+
+  // Show loading indicators
+  setResponses(modelsToSend.map(id => ({
+    modelId: id,
+    content: '',
+    isLoading: true,
+    error: undefined
+  })));
+
+  try {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const session = (sessionData as any)?.session;
+
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        message: messageText,
+        models: modelsToSend,
+        attachedFiles: attachedFiles.length > 0
+          ? attachedFiles.map(f => ({ name: f.name, type: f.type, size: f.size }))
+          : []
+      })
+    });
+
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      throw new Error(errBody.error || `HTTP ${res.status}`);
     }
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: messageContent,
-      role: 'user',
-      timestamp: new Date()
-    };
-    setMessages(prev => [...prev, userMessage]);
-    setCurrentInput('');
-    setAttachedFiles([]);
-    setIsLoading(true);
-    // Create or get session
-    let sessionId = currentSessionId;
-    if (!sessionId) {
-      sessionId = await createNewSession();
-      setCurrentSessionId(sessionId);
-    }
-    // Save user message to database
-    let messageId: string | null = null;
-    if (sessionId) {
-      messageId = await saveMessageToDatabase(userMessage, sessionId);
-    }
-       // FIXED VERSION — DO NOT create initial loading states
-    // We will set real responses directly when they arrive
-    setResponses(selectedModels.map(modelId => ({
-      modelId,
-      content: '',
-      isLoading: true,
-      error: undefined
-    })));
-    try {
-      // Make API call to our backend which will call OpenRouter
-      // Note: In a real implementation, you would need to handle file uploads
-      // This would typically involve FormData and multipart/form-data
-            // ──────── DEBUG VERSION – COPY-PASTE THIS EXACTLY ────────
-      console.log('Sending to backend →', { message: currentInput, models: selectedModels });
 
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: currentInput,
-          models: selectedModels,
-          attachedFiles: attachedFiles.length > 0
-            ? attachedFiles.map(file => ({ name: file.name, type: file.type, size: file.size }))
-            : []
-        })
-      });
+    const data = await res.json();
+    const results = (data.responses || []).map((r: any) => ({
+      modelId: r.modelId,
+      content: (r.content || '').trim() || 'No response',
+      isLoading: false,
+      error: r.error
+    }));
 
-      console.log('Backend status →', response.status);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('BACKEND ERROR →', response.status, errorText);
-        throw new Error(`Backend failed: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('SUCCESS – DATA FROM BACKEND →', data);
-
-      if (data.error) {
-        console.error('API ERROR →', data.error);
-        throw new Error(data.error);
-      }
-      // ──────── END OF DEBUG VERSION ────────
-      // Map the API responses to our local format
-                 // FINAL WORKING VERSION — COPY-PASTE EXACTLY
-      const results: ModelResponse[] = data.responses.map((resp: any) => ({
-        modelId: resp.modelId,
-        content: resp.content?.trim() || 'No response',
+    setResponses(results.map((item: any) => {
+      const r = item as { modelId: string; content?: string; error?: string };
+      return {
+        modelId: r.modelId,
+        content: r.error ? "" : (r.content?.trim() || "No response received"),
         isLoading: false,
-        error: resp.error || undefined,
+        error: r.error,
         isBest: false
-      }));
+      };
+    }));
 
-      console.log('FINAL RESULTS →', results); // ← You will see real text here now
-      // END OF FIX
-      setResponses(results);
-      // Save model responses to database
-      if (messageId && sessionId) {
-        for (const result of results) {
-          if (result.content && !result.error) {
-            await saveModelResponseToDatabase(messageId, result.modelId, result.content, result.isBest);
-          }
+    // Save responses to DB
+    if (messageId) {
+      for (const r of results) {
+        if (r.content && !r.error) {
+          await saveModelResponseToDatabase(messageId, r.modelId, r.content);
         }
       }
-      // Update session title if it's the first message
-      if (sessionId && messages.length === 0) {
-        const title = currentInput.length > 50 ? currentInput.substring(0, 50) + '...' : currentInput;
-        await supabase
-          .from('chat_sessions')
-          .update({ title, updated_at: new Date().toISOString() })
-          .eq('id', sessionId);
-        // Refresh recent sessions list
-        await loadRecentSessions();
-      }
-    } catch (error) {
-      console.error('Error getting responses:', error);
-      setResponses(prev => prev.map(r => ({
-        ...r,
-        error: error instanceof Error ? error.message : 'Failed to get response',
-        isLoading: false
-      })));
-    } finally {
-      setIsLoading(false);
     }
-  };
+
+    // Update title on first message
+    if (sessionId && !currentSessionId) {
+      const title = messageText.slice(0, 50) + (messageText.length > 50 ? '...' : '');
+      await supabase
+        .from('chat_sessions')
+        .update({ title, updated_at: new Date().toISOString() })
+        .eq('id', sessionId);
+      await loadRecentSessions();
+    }
+  } catch (err: any) {
+    console.error("Send message failed:", err);
+    setResponses(prev => prev.map(r => ({ ...r, error: err.message || 'Failed', isLoading: false })));
+  } finally {
+    setIsLoading(false);
+  }
+};
+
   // Removed unused functions: handleCopyResponse and handleMarkBest
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -876,20 +1052,20 @@ const createNewSession = async () => {
   };
   // Handle file attachment
   const handleFileAttachment = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      setAttachedFiles(prev => [...prev, ...newFiles]);
-      setShowFilePicker(false);
-    }
-  };
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('handleImageUpload called, files:', e.target.files);
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      setAttachedFiles(prev => [...prev, ...newFiles]);
-      setShowPhotoOptions(false);
-    }
-  };
+  if (!e.target.files) return;
+  const newFiles = Array.from(e.target.files);
+  setAttachedFiles(prev => [...prev, ...newFiles]);
+  setShowFilePicker(false);
+};
+
+const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  console.log('handleImageUpload called, files:', e.target.files);
+  if (!e.target.files) return;
+  const newFiles = Array.from(e.target.files);
+  setAttachedFiles(prev => [...prev, ...newFiles]);
+  setShowPhotoOptions(false);
+};
+
   // Remove attached file
   const removeAttachedFile = (index: number) => {
     setAttachedFiles(prev => prev.filter((_, i) => i !== index));
@@ -910,53 +1086,178 @@ const createNewSession = async () => {
   // Show auth form if not logged in
   if (!user) {
     return (
-      <div className={cn(
-        "min-h-screen flex items-center justify-center p-6 transition-colors duration-300",
-        darkMode ? "bg-slate-900" : "bg-white"
-      )}>
-        <div className="w-full max-w-md">
-          {/* Logo */}
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <SparklesIcon className="w-8 h-8 text-white" />
+      <>
+        <div className="fixed inset-0 bg-black" />
+
+        <div className="relative min-h-screen flex flex-col">
+          {/* Navbar */}
+          <nav className="relative z-50 flex justify-between items-center px-8 py-6 max-w-7xl mx-auto w-full">
+            <div className="flex items-center gap-4">
+              <div className="w-11 h-11 bg-gradient-to-br from-teal-400 to-cyan-600 rounded-xl flex items-center justify-center shadow-2xl ring-4 ring-teal-500/30">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+              </div>
+              <span className="text-3xl font-black text-white">MultiMind</span>
             </div>
-            <h1 className={cn(
-              "text-3xl font-bold mb-2",
-              darkMode ? "text-white" : "text-slate-900"
-            )}>MultiMind</h1>
-            <p className={cn(
-              darkMode ? "text-slate-400" : "text-slate-600"
-            )}>Sign in to continue</p>
-          </div>
-          {/* Auth Form */}
-          <div className={cn(
-            "rounded-2xl p-8 backdrop-blur-xl border transition-colors duration-300",
-            darkMode
-              ? "bg-slate-800/80 border-slate-700/50"
-              : "bg-white/90 border-slate-200/50"
-          )}>
-            <div className="text-center">
-              <p className={cn(
-                "mb-6",
-                darkMode ? "text-slate-400" : "text-slate-600"
-              )}>Please sign in to use MultiMind</p>
-              <Link
+
+            <a href="/auth" className="group relative overflow-hidden rounded-full px-10 py-4 bg-gradient-to-r from-teal-500/10 to-cyan-500/10 backdrop-blur-xl border border-teal-400/40 hover:border-teal-300/70 transition-all duration-500">
+              <span className="relative z-10 flex items-center gap-3 text-white font-semibold">
+                Log In
+                <svg className="w-5 h-5 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                </svg>
+              </span>
+              <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 group-hover:translate-x-full transition-transform duration-1000" />
+            </a>
+          </nav>
+
+          {/* Main Content */}
+          <div className="relative flex-1 flex flex-col items-center px-6 pt-20 pb-40">
+
+            {/* Headline */}
+            <h1 className="text-6xl md:text-8xl font-black text-white text-center leading-tight mb-32">
+              World’s Most<br />
+              Powerful AIs.<br />
+              One{" "}
+              <span className="relative inline-block min-w-[400px]">
+                <span className="absolute inset-0 text-teal-400 animate-chat">Chat</span>
+                <span className="text-cyan-400 opacity-0 animate-subscription">Subscription</span>
+              </span>.
+            </h1>
+
+            {/* Feature Panels */}
+            <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-3 gap-10 mb-32">
+              {[
+                { title: "Compare AIs Instantly", desc: "Ask once — get answers from all top models side-by-side." },
+                { title: "No Limits, No Paywalls", desc: "Unlimited usage of GPT-5, Claude, Gemini, Grok & more." },
+                { title: "One Simple Subscription", desc: "All premium models, one price, cancel anytime." },
+              ].map((feature, i) => (
+                <div key={i} className="group relative bg-white/5 backdrop-blur-2xl rounded-3xl border border-teal-500/30 p-10 shadow-2xl hover:border-teal-400/70 hover:bg-white/10 hover:scale-105 transition-all duration-500">
+                  <h3 className="text-3xl font-black mb-4 bg-gradient-to-r from-teal-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-300 text-lg leading-relaxed">{feature.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Orbit */}
+            <div className="relative w-full h-[1000px] -mt-10">
+              {/* Glow + Center + Models – unchanged */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                <div className="w-[900px] h-[900px] bg-teal-500/20 rounded-full blur-3xl animate-pulse" />
+                <div className="absolute inset-0 w-[800px] h-[800px] bg-cyan-500/25 rounded-full blur-3xl animate-pulse delay-700" />
+              </div>
+
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40">
+                <div className="w-72 h-72 bg-black/95 backdrop-blur-2xl rounded-full border-8 border-teal-500/50 flex items-center justify-center shadow-2xl">
+                  <div className="w-60 h-60 bg-gradient-to-br from-teal-400 to-cyan-600 rounded-full flex items-center justify-center ring-8 ring-teal-500/40">
+                    <svg className="w-40 h-40 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+
+
+              {AI_MODELS.map((model) => {
+                const name = model.name.toLowerCase();
+                let x = 0, y = 0;
+                if (name.includes("mistral")) x = 0, y = -420;
+                else if (name.includes("perplexity")) x = -520, y = -300;
+                else if (name.includes("chatgpt") || name.includes("gpt")) x = -520, y = -150;
+                else if (name.includes("google") || name.includes("gemini")) x = -520, y = 0;
+                else if (name.includes("claude")) x = -520, y = 150;
+                else if (name.includes("qwen")) x = 520, y = -300;
+                else if (name.includes("deepseek")) x = 520, y = -150;
+                else if (name.includes("meta") || name.includes("llama")) x = 520, y = 0;
+                else if (name.includes("grok")) x = 520, y = 150;
+
+                return (
+                  <div key={model.id} className="absolute top-1/2 left-1/2" style={{ transform: `translate(${x}px, ${y}px) translate(-50%, -50%)` }}>
+                    <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-70 -z-10" viewBox="0 0 100 100">
+                      <path d="M50,50 Q50,0 50,10" fill="none" stroke="url(#glow)" strokeWidth="4" className="animate-pulse" />
+                      <defs>
+                        <linearGradient id="glow" x1="0%" y1="100%" x2="0%" y2="0%">
+                          <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.9" />
+                          <stop offset="60%" stopColor="#14b8a6" stopOpacity="0.7" />
+                          <stop offset="100%" stopColor="#06b6d4" stopOpacity="0" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+
+                    <div className="w-96 bg-white/5 backdrop-blur-2xl rounded-3xl border border-teal-500/30 p-8 shadow-2xl hover:border-teal-400/70 hover:bg-white/10 transition-all duration-500">
+                      <div className="flex items-start gap-6">
+                        <div className="w-16 h-16 bg-gradient-to-br from-teal-400 to-cyan-600 rounded-2xl flex items-center justify-center ring-4 ring-teal-400/40 shadow-xl">
+                          <div className="w-10 h-10 text-white">
+                            {typeof model.icon === "function" ? model.icon(true) : model.icon}
+                          </div>
+                        </div>
+                        <div>
+                          <h3 className="text-2xl font-bold text-white">{model.name}</h3>
+                          <span className="inline-block mt-2 px-4 py-2 bg-teal-500/20 text-teal-300 text-sm font-semibold rounded-full border border-teal-400/50">
+                            {model.provider}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* SMALL LIGHT-BLUE GLOWING BUTTON – FINAL VERSION */}
+            <div className="relative z-50 -mt-28">
+              <a
                 href="/auth"
-                className="inline-block bg-gradient-to-r from-violet-600 to-purple-700 text-white rounded-xl py-3 px-6 font-medium hover:from-violet-700 hover:to-purple-800 transition-all duration-200"
+                className="group relative px-12 py-6 rounded-2xl bg-cyan-500/20 backdrop-blur-xl border-2 border-cyan-400 text-white font-bold text-2xl shadow-2xl hover:bg-cyan-500/35 hover:border-cyan-300 hover:scale-110 transition-all duration-500 flex items-center gap-4"
               >
-                Sign In / Sign Up
-              </Link>
+                Get Started Now
+                <svg className="w-7 h-7 group-hover:translate-x-3 transition-transform duration-400" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+
+                {/* Glowing effect */}
+                <div className="absolute -inset-1 rounded-2xl bg-cyan-400/40 opacity-70 blur-xl group-hover:opacity-100 transition-opacity duration-700" />
+                <div className="absolute -inset-2 rounded-2xl bg-cyan-400/30 opacity-50 blur-2xl animate-pulse" />
+              </a>
             </div>
+
           </div>
+
+          {/* Animations */}
+          <style jsx global>{`
+  @keyframes chat {
+    0%, 45% { opacity: 1; transform: translateY(0); }
+    50%, 100% { opacity: 0; transform: translateY(-60px); }
+  }
+  @keyframes subscription {
+    0%, 45% { opacity: 0; transform: translateY(60px); }
+    50%, 100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-chat {
+    animation: chat 5s infinite ease-in-out;
+  }
+  .animate-subscription {
+    animation: subscription 5s infinite ease-in-out;
+  }
+`}
+</style>
         </div>
-      </div>
+      </>
     );
   }
   return (
-    <div className={cn(
-      "min-h-screen transition-colors duration-300",
-      darkMode ? "bg-[#202124] text-white" : "bg-[#FBF9F6] text-gray-900"
-    )}>
+    <div
+  className={cn(
+    "min-h-screen antialiased transition-colors duration-300",
+    darkMode ? "bg-black text-white" : "bg-white text-gray-900"
+  )}
+>
+
       {/* Mobile Hamburger Menu */}
       {isMobile && (
         <button
@@ -973,505 +1274,355 @@ const createNewSession = async () => {
         </button>
       )}
       {/* Sidebar */}
-      <div className={cn(
-        "fixed left-0 top-0 h-full backdrop-blur-xl transition-all duration-300 z-40",
-        darkMode
-          ? "bg-slate-800/80 border-r border-slate-600"
-          : "bg-white/90 border-r border-slate-300",
-        sidebarCollapsed ? "w-16" : "w-64",
-        isMobile && sidebarCollapsed ? "-translate-x-full" : "translate-x-0"
-      )}>
-        <div className={cn(
-          "h-full transition-all duration-300 overflow-hidden",
-          sidebarCollapsed ? "p-3" : "pl-6 pr-0 py-6"
-        )}>
-          {/* Logo and Dark Mode Toggle */}
+      {/* ==================== ULTIMATE FINAL SIDEBAR – PERFECT COLLAPSED & EXPANDED ==================== */}
+      <div
+  className={cn(
+    "fixed left-0 top-0 h-full backdrop-blur-xl transition-all duration-300 z-40 border-r",
+    darkMode
+      ? "bg-black border-gray-900 text-white"
+      : "bg-white border-gray-200 text-gray-900",
+    sidebarCollapsed ? "w-16" : "w-72",
+    isMobile && sidebarCollapsed ? "-translate-x-full" : "translate-x-0"
+  )}
+>
+
+        <div className={cn("h-full flex flex-col text-white", sidebarCollapsed ? "px-3 py-4" : "p-6")}>
+
+          {/* Logo + MultiMind + Theme Toggle */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-violet-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/30">
                 <SparklesIcon className="w-6 h-6 text-white" />
               </div>
               {!sidebarCollapsed && (
-                <div>
-                  <h1 className="text-xl font-bold bg-gradient-to-r from-violet-400 to-purple-500 bg-clip-text text-transparent">
-                    MultiMind
-                  </h1>
-                  <p className={cn(
-                    "text-sm",
-                    darkMode ? "text-slate-400" : "text-slate-600"
-                  )}>
-                    Compare AI models in real-time
-                  </p>
-                </div>
+                <span className="text-2xl font-black text-white tracking-tight">
+                  MultiMind
+                </span>
               )}
             </div>
-            {/* Dark Mode Toggle */}
+
+            {/* Theme Toggle – only in expanded mode */}
             {!sidebarCollapsed && (
               <button
                 onClick={toggleDarkMode}
-                className={cn(
-                  "p-2 rounded-lg transition-colors mr-2",
-                  darkMode
-                    ? "text-gray-400 hover:text-white hover:bg-slate-700/50"
-                    : "text-gray-600 hover:text-slate-800 hover:bg-slate-200/50"
-                )}
-                title={darkMode ? "Light Mode" : "Dark Mode"}
+                className="p-2.5 rounded-lg hover:bg-gray-900 transition-all"
+                title={darkMode ? "Light mode" : "Dark mode"}
               >
-                {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                {darkMode ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-gray-400" />}
               </button>
             )}
           </div>
-          {/* User Info section removed */}
-          {/* New Chat Button */}
-          {/* New Chat and History Buttons */}
-          <div className={cn(
-            "flex gap-2 mb-6",
-            sidebarCollapsed ? "flex-col" : "flex-row mr-2"
-          )}>
-            <button
-              onClick={handleNewChat}
-              className={cn(
-                "bg-gradient-to-r from-violet-600 to-purple-700 text-white rounded-lg py-2 flex items-center justify-center gap-2 hover:from-violet-700 hover:to-purple-800 transition-all duration-200 shadow-lg",
-                sidebarCollapsed ? "w-full px-2" : "flex-1 px-4"
-              )}>
-              <Plus className="w-4 h-4" />
-              {!sidebarCollapsed && <span>New Chat</span>}
-            </button>
-            <Link
-              href="/history"
-              className={cn(
-                "bg-gradient-to-r from-violet-600 to-purple-700 text-white rounded-lg py-2 flex items-center justify-center gap-2 hover:from-violet-700 hover:to-purple-800 transition-all duration-200 shadow-lg",
-                sidebarCollapsed ? "w-full px-2" : "flex-1 px-4"
-              )}
-            >
-              <History className="w-4 h-4" />
-              {!sidebarCollapsed && <span>History</span>}
-            </Link>
-          </div>
-          {/* Create Project + Models – Models button = History button size */}
-<div className="flex items-center gap-3 mt-4">
-  {/* Create Project – unchanged */}
-  <button
-    onClick={() => setOpen(true)}
-    className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-700 hover:to-purple-800 text-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 transition-all shadow-lg text-sm font-medium"
-  >
-    <Plus className="w-5 h-5" />
-    {!sidebarCollapsed && "Create Project"}
-  </button>
 
-  {/* MODELS BUTTON – NOW IDENTICAL TO HISTORY BUTTON */}
-  <button
-    onClick={() => setShowModelsDropdown(prev => !prev)}
-    className="bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white rounded-xl py-3 px-6 flex items-center justify-center gap-2 transition-all shadow-lg text-sm font-medium whitespace-nowrap"
-  >
-    <Zap className="w-5 h-5" />
-    {!sidebarCollapsed && (
-      <>
-        <span>Models</span>
-        <ChevronRight className={cn("w-4 h-4 transition-transform", showModelsDropdown && "rotate-90")} />
-      </>
-    )}
-  </button>
-</div>
-
-{/* Dropdown – still perfectly centered & beautiful */}
-{showModelsDropdown && !sidebarCollapsed && (
-  <div className="mt-3 flex justify-center">
-    <div className="w-52 bg-slate-800/95 backdrop-blur-xl border border-slate-700 rounded-xl shadow-2xl overflow-hidden">
-      <button
-        onClick={() => {
-          setShowFreeOnly(true);
-          setShowModelsDropdown(false);
-        }}
-        className={cn(
-          "w-full px-5 py-3 text-left flex items-center justify-between text-sm transition-colors",
-          showFreeOnly ? "bg-violet-600/70 text-white" : "hover:bg-slate-700/60 text-slate-300"
-        )}
-      >
-        <span className="flex items-center gap-3">
-          <SparklesIcon className="w-4 h-4 text-green-400" />
-          Free Models
-        </span>
-        {showFreeOnly && <Check className="w-4 h-4 text-green-400" />}
-      </button>
-
-      <button
-        onClick={() => {
-          setShowFreeOnly(false);
-          setShowModelsDropdown(false);
-        }}
-        className={cn(
-          "w-full px-5 py-3 text-left flex items-center justify-between text-sm border-t border-slate-700 transition-colors",
-          !showFreeOnly ? "bg-violet-600/70 text-white" : "hover:bg-slate-700/60 text-slate-300"
-        )}
-      >
-        <span className="flex items-center gap-3">
-          <Crown className="w-4 h-4 text-yellow-400" />
-          Premium Models
-        </span>
-        <span className="text-xs bg-yellow-500/20 text-yellow-300 px-2.5 py-1 rounded-full">
-          ₹499/mo
-        </span>
-      </button>
-    </div>
-  </div>
-)}
-          
-{/* Recent Chats - WITH LOADING & ERROR STATE */}
-{!sidebarCollapsed && (
-  <div className="mb-6 flex flex-col" style={{ height: 'calc(100vh - 300px)' }}>
-    <h3 className={cn(
-      "text-sm font-medium mb-3 flex-shrink-0 px-3",
-      darkMode ? "text-gray-300" : "text-gray-700"
-    )}>Recent Chats</h3>
-
-    <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800/50 pr-6">
-      <div className="space-y-1">
-        {recentSessionsLoading ? (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-violet-500 border-t-transparent"></div>
-            <p className="text-sm text-gray-400 mt-3">Loading your chats...</p>
-          </div>
-        ) : recentSessionsError ? (
-          <div className="text-center py-12">
-            <p className="text-sm text-red-400 mb-3">Failed to load chats</p>
-            <button onClick={loadRecentSessions} className="text-xs underline text-violet-400 hover:text-violet-300">
-              Tap to retry
-            </button>
-          </div>
-        ) : recentSessions.length > 0 ? (
-          <>
-            {recentSessions.map((session) => (
-              <div
-                key={session.id}
-                className={cn(
-                  "group py-3 px-3 cursor-pointer transition-all duration-200 rounded-lg border-l-2 flex items-center justify-between",
-                  darkMode
-                    ? currentSessionId === session.id
-                      ? "bg-gray-700 border-l-violet-500 shadow-lg"
-                      : "hover:bg-gray-800 border-l-transparent"
-                    : currentSessionId === session.id
-                      ? "bg-gray-100 border-l-violet-600 shadow-lg"
-                      : "hover:bg-gray-50 border-l-transparent"
-                )}
-                onClick={() => loadChatSession(session.id)}
-              >
-                <div className="flex-1 min-w-0 pr-2">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className={cn(
-                      "text-sm font-medium truncate flex-1",
-                      darkMode ? "text-gray-100" : "text-gray-800"
-                    )}>
-                      {session.title}
-                    </span>
-                    <span className={cn(
-                      "text-xs ml-3",
-                      darkMode ? "text-gray-400" : "text-gray-500"
-                    )}>
-                      {session.date}
-                    </span>
-                  </div>
-                  <p className={cn(
-                    "text-xs truncate",
-                    darkMode ? "text-gray-400" : "text-gray-600"
-                  )}>
-                    {session.firstMessage}
-                  </p>
-                </div>
-
-                {/* DELETE BUTTON - NOW WITH PROPER ERROR HANDLING */}
-                {/* DELETE BUTTON - 100% WORKING */}
-<button
-  onClick={async (e) => {
-    e.stopPropagation();
-    if (!window.confirm('Delete this chat forever?')) return;
-
-    try {
-      // 1. DELETE SESSION (UUID!)
-      const { error: delError } = await supabase
-        .from('chat_sessions')
-        .delete()
-        .eq('id', session.id);  // ← session.id is now UUID
-
-      if (delError) {
-        console.error('Supabase delete error:', delError);
-        throw delError;
-      }
-
-      // 2. REFRESH UI
-      await loadRecentSessions();
-
-      // 3. CLEAR CURRENT CHAT IF DELETED
-      if (currentSessionId === session.id) {
-        handleNewChat();
-        setCurrentSessionId(null);
-      }
-
-      alert('Chat deleted');
-    } catch (err: any) {
-      console.error('Delete failed:', err);
-      alert(`Delete failed: ${err.message || 'Unknown error'}`);
-    }
-  }}
-  className={cn(
-    "ml-3 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all",
-    darkMode ? "hover:bg-red-500/20 text-red-400" : "hover:bg-red-500/10 text-red-600"
-  )}
-  title="Delete chat"
->
-  <Trash2 className="w-4 h-4" />
-</button>
-              </div>
-            ))}
-          </>
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-sm text-gray-400">No conversations yet</p>
-            <p className="text-xs text-gray-500 mt-2">Start a new chat!</p>
-          </div>
-        )}
-      </div>
-    </div>
-  </div>
-)}
-{showWebSearch && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100]">
-                  <div className="w-[600px] max-h-[80vh] rounded-2xl p-6 bg-slate-800 text-white relative shadow-2xl overflow-hidden">
-                    {/* Close Button */}
-                    <button
-                      onClick={() => setShowWebSearch(false)}
-                      className="absolute top-3 right-3 p-2 rounded-full hover:bg-slate-700"
-                    >
-                      ✖
-                    </button>
-                    {/* Header */}
-                    <div className="mb-4">
-                      <h2 className="text-2xl font-semibold flex items-center gap-2">
-                        🌐 Web Search
-                      </h2>
-                      <p className="text-slate-400 text-sm mt-1">
-                        Ask anything and get Google-powered answers instantly
-                      </p>
-                    </div>
-                    {/* Search Form */}
-                    <form onSubmit={handleWebSearch} className="flex gap-3 mb-4">
-                      <input
-                        type="text"
-                        value={webQuery}
-                        onChange={(e) => {
-                          setWebQuery(e.target.value);
-                          if (e.target.value.trim() === "") {
-                            setWebResults(null); // clear old results when input is empty
-                          }
-                        }}
-                        placeholder="Search the web..."
-                        className="flex-1 px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500 text-white placeholder-slate-400"
-                      />
-                      <button
-                        type="submit"
-                        className="px-5 py-3 bg-violet-600 hover:bg-violet-500 rounded-lg text-white font-medium transition-all duration-200"
-                      >
-                        Search
-                      </button>
-                      {/* 🔍 Icon Button */}
-                      <button
-                        type="submit"
-                        className="absolute right-2 text-gray-300 hover:text-white"
-                        title="Search"
-                      >
-                        🔍
-                      </button>
-                    </form>
-                    {/* Results Area */}
-                    <div className="overflow-y-auto bg-slate-700/50 rounded-lg p-4 h-[350px]">
-                      {webResults ? (
-                        <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                          {webResults}
-                        </p>
-                      ) : (
-                        <p className="text-slate-400 text-sm italic">Your results will appear here...</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-            
-          {/* Settings Section */}
-          <div className={cn(
-            "absolute bottom-6 transition-all duration-300",
-            sidebarCollapsed ? "left-3 right-3" : "left-6 right-6"
-          )}>
-            <div className="space-y-3">
-              {/* User Dropdown Button */}
-              <div className="flex items-center gap-2 relative" data-dropdown="user-menu">
-                <button
-                  onClick={() => setShowUserDropdown(!showUserDropdown)}
-                  className={cn(
-                    "flex items-center gap-2 py-3 bg-gradient-to-r from-violet-600 to-purple-700 text-white rounded-lg hover:from-violet-700 hover:to-purple-800 transition-all duration-200 shadow-lg flex-grow",
-                    sidebarCollapsed ? "justify-center px-2" : "px-4"
-                  )}
-                  title={user?.email || "User Menu"}
-                >
-                  <User className="w-4 h-4" />
-                  {!sidebarCollapsed && <span className="text-sm">{user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}</span>}
-                </button>
-                {/* User Dropdown Menu */}
-                {showUserDropdown && (
-                  <div className={cn(
-                    "absolute bottom-full mb-2 bg-slate-800/95 backdrop-blur-sm border border-slate-600/50 rounded-xl shadow-2xl z-50 min-w-[240px] overflow-hidden",
-                    sidebarCollapsed ? "left-0" : "left-0"
-                  )}>
-                    {/* Email ID Header */}
-                    <div className="flex items-center gap-3 px-4 py-3 bg-slate-700/50 border-b border-slate-600/50">
-                      <div className="w-8 h-8 bg-gradient-to-r from-violet-500 to-purple-600 rounded-full flex items-center justify-center">
-                        <User className="w-4 h-4 text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-white truncate">
-                          {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}
-                        </div>
-                        <div className="text-xs text-gray-400 truncate">
-                          {user?.email || 'user@example.com'}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="py-2">
-                      {/* Settings */}
-                      <button
-                        onClick={() => {
-                          setShowSettings(true);
-                          setShowUserDropdown(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:bg-slate-700/50 transition-colors"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        <span>Settings</span>
-                      </button>
-                      {/* Logout */}
-                      <button
-                        onClick={() => {
-                          signOut();
-                          setShowUserDropdown(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-slate-700/50 transition-colors"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                        <span>Log out</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-                {!sidebarCollapsed && (
-                  <button
-                    onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                    className={cn(
-                      "py-3 px-2 bg-gradient-to-r from-violet-600 to-purple-700 text-white rounded-lg hover:from-violet-700 hover:to-purple-800 transition-all duration-200 shadow-lg"
-                    )}
-                    title="Collapse Sidebar"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-              {/* Collapse Button - Now below the human button when sidebar is collapsed */}
-              {sidebarCollapsed && (
-                <button
-                  onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                  className={cn(
-                    "w-full py-3 px-2 bg-gradient-to-r from-violet-600 to-purple-700 text-white rounded-lg hover:from-violet-700 hover:to-purple-800 transition-all duration-200 shadow-lg flex justify-center mt-3"
-                  )}
-                  title="Expand Sidebar"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-        {open && (
-          <div className="fixed inset-0 z-50 flex items-start">
-            <div className="fixed inset-0 bg-black/60" onClick={() => setOpen(false)} />
-            <div className="m-8 w-[380px] bg-slate-700/50
- text-white rounded-2xl p-6 shadow-2xl border border-[#3d3269]/50 backdrop-blur-md">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-2xl font-bold">Create New Project</h3>
-                  <p className="text-slate-400 text-sm">Organize your AI tasks in a project workspace.</p>
-                </div>
-                <button
-                  onClick={() => setOpen(false)}
-                  className="text-slate-300 hover:text-white rounded p-1"
-                  aria-label="Close"
-                >
-                  ✖
-                </button>
-              </div>
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  const title = (e.currentTarget.elements.namedItem("title") as HTMLInputElement)?.value;
-                  const description = (e.currentTarget.elements.namedItem("description") as HTMLTextAreaElement)?.value;
-                  try {
-                    const res = await fetch("/api/create-project", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ title, description }),
-                    });
-                    const data = await res.json();
-                    if (data.success) {
-                      alert(`✅ Project created: ${data.result.project_name}`);
-                    } else {
-                      alert("❌ Failed to create project");
-                    }
-                  } catch (err) {
-                    console.error(err);
-                    alert("Error connecting to AI");
-                  }
-                  setOpen(false);
-                }}
-                className="mt-4 flex flex-col gap-4"
-              >
-                <div>
-                  <label className="block text-sm text-slate-300 mb-1">Project Title</label>
+          {/* ====== EXPANDED CONTENT ====== */}
+          {!sidebarCollapsed && (
+            <>
+              {/* Search */}
+              <div className="mb-5">
+                <div className="relative">
                   <input
-                    name="title"
-                    placeholder="Enter project title"
-                    className="w-full p-2 rounded bg-slate-700 border border-slate-600 text-white focus:outline-none"
-                  />
+  type="text"
+  placeholder="Search"
+  onChange={(e) => console.log("Search:", e.target.value)}
+  className={cn(
+    "w-full py-3 pl-11 pr-4 rounded-full text-sm border transition-colors focus:border-cyan-500 focus:outline-none",
+    darkMode
+      ? "bg-gray-900/70 border-gray-800 text-white placeholder-gray-500"
+      : "bg-white border-gray-300 text-gray-900 placeholder-gray-400"
+  )}
+/>
+
+                  <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
                 </div>
-                <div>
-                  <label className="block text-sm text-slate-300 mb-1">Description</label>
-                  <textarea
-                    name="description"
-                    placeholder="Short project description"
-                    className="w-full p-2 rounded bg-slate-700 border border-slate-600 text-white focus:outline-none h-28"
-                  />
+              </div>
+
+              {/* New Chat */}
+              <button onClick={handleNewChat} className="flex items-center gap-3 w-full py-3 px-4 rounded-lg hover:bg-gray-900 transition-colors mb-2">
+                <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                </svg>
+                <span className="text-sm font-medium">New chat</span>
+              </button>
+
+              {/* Models */}
+              <button
+                onClick={() => setShowModelPreferences(true)}
+                className="flex items-center justify-between w-full py-3 px-4 rounded-lg hover:bg-gray-900 transition-colors text-gray-300"
+              >
+                <div className="flex items-center gap-3">
+                  <Brain className="w-5 h-5 text-cyan-400" />
+                  <span>Models</span>
                 </div>
-                <div className="flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setOpen(false)}
-                    className="px-4 py-2 rounded bg-slate-700 hover:bg-slate-600"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 rounded bg-purple-500 hover:bg-purple-600 text-white"
-                  >
-                    Create Project
-                  </button>
-                   </div>
-              </form>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+              {/* Projects */}
+              <button
+                onClick={() => setShowProjectModal(true)}
+                className="flex items-center justify-between w-full py-3 px-4 rounded-lg hover:bg-gray-900 transition-colors mb-6 text-gray-300"
+              >
+                <div className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                  </svg>
+                  Projects
+                </div>
+                <div className="flex items-center gap-2"><Plus className="w-4 h-4" /><ChevronRight className="w-4 h-4" /></div>
+              </button>
+
+              {/* Recent Chats */}
+  {/* Recent Chats – WITH HEADING + DELETE BUTTON (INSTANTLY WORKING) */}
+{/* RECENT CHATS – FINAL WORKING VERSION (WITH HEADING + DELETE + INSTANT SHOW) */}
+<div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 pr-2 mt-6">
+  {/* Heading – Only show when sidebar is expanded */}
+  {!sidebarCollapsed && (
+    <h3 className="px-6 mb-3 text-xs font-bold text-gray-500 uppercase tracking-wider">
+      Recent Chats
+    </h3>
+  )}
+
+  {/* Loading / Error / Empty States */}
+  {recentSessionsLoading ? (
+    <div className="flex flex-col items-center py-16 text-gray-500">
+      <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-3" />
+      <span className="text-sm">Loading your chats...</span>
+    </div>
+  ) : recentSessionsError ? (
+    <div className="text-center py-16 text-red-400">
+      Failed to load chats.{" "}
+      <button onClick={loadRecentSessions} className="underline">
+        Retry
+      </button>
+    </div>
+  ) : recentSessions.length === 0 ? (
+    <div className="text-center py-16 text-gray-500">
+      <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-20" />
+      <p>No conversations yet</p>
+      <p className="text-xs mt-2">Start a new chat to see it here</p>
+    </div>
+  ) : (
+    /* Actual Chat List */
+    <div className="space-y-1 px-2">
+      {recentSessions.map((session) => (
+        <div
+          key={session.id}
+          className="group relative rounded-lg hover:bg-gray-800/60 transition-all duration-200"
+        >
+          <button
+            onClick={() => loadChatSession(session.id)}
+            className="w-full flex items-center gap-3 px-4 py-3 text-left rounded-lg hover:bg-gray-800/80 transition-all"
+          >
+            <div className="w-9 h-9 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0 ring-2 ring-cyan-500/30">
+              <MessageSquare className="w-5 h-5 text-cyan-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-white truncate text-sm">
+                {session.title}
+              </p>
+              <p className="text-xs text-gray-400 truncate">
+                {session.firstMessage || "New chat"}
+              </p>
+            </div>
+            <span className="text-xs text-gray-500 flex-shrink-0">
+              {session.date}
+            </span>
+          </button>
+
+          {/* Delete Button – Hover Only */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              deleteChatSession(session.id);
+            }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-red-900/40 rounded-lg"
+            title="Delete chat"
+          >
+            <Trash2 className="w-4 h-4 text-red-400" />
+          </button>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
+            </>
+          )}
+
+          {/* ====== COLLAPSED MODE: Only 4 Icons + User Avatar ====== */}
+          {sidebarCollapsed && (
+            <div className="flex-1 flex flex-col items-center justify-start space-y-8 pt-6">
+              {/* New Chat */}
+              <button onClick={handleNewChat} className="p-3 rounded-xl hover:bg-gray-900 transition-all group" title="New chat">
+                <svg className="w-6 h-6 text-cyan-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
+
+              {/* Models */}
+              <button
+                onClick={() => setShowProjectModal(true)}
+                className="p-3 rounded-xl hover:bg-gray-900 transition-all group"
+                title="Projects"
+              >
+                <svg className="w-6 h-6 text-cyan-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                </svg>
+              </button>
+
+              {/* Projects */}
+              <button onClick={() => setOpen(true)} className="p-3 rounded-xl hover:bg-gray-900 transition-all group" title="Projects">
+                <svg className="w-6 h-6 text-cyan-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                </svg>
+              </button>
+            </div>
+          )}
+
+          {/* ====== BOTTOM: User + Collapse Button ====== */}
+          <div className="mt-auto pt-4 border-t border-gray-900">
+            <div className={cn("flex items-center", sidebarCollapsed ? "justify-center" : "justify-between")}>
+
+              {/* User Avatar + Name (only name when expanded) */}
+              <button
+                onClick={() => setShowUserDropdown(prev => !prev)}
+                className={cn(
+                  "flex items-center gap-3 rounded-xl transition-all hover:bg-gray-900",
+                  sidebarCollapsed ? "p-3" : "px-4 py-3"
+                )}
+              >
+                <div className="w-9 h-9 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full flex items-center justify-center shadow-lg flex-shrink-0">
+                  <User className="w-5 h-5 text-white" />
+                </div>
+                {!sidebarCollapsed && (
+                  <span className="text-sm font-medium truncate max-w-40">
+                    {user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User"}
+                  </span>
+                )}
+              </button>
+              {/* Collapse/Expand Toggle */}
+              <button
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className="p-3 rounded-xl hover:bg-gray-900 transition-all ml-2"
+              >
+                {sidebarCollapsed ? (
+                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                ) : (
+                  <ChevronLeft className="w-5 h-5 text-gray-400" />
+                )}
+              </button>
             </div>
           </div>
-        )}
         </div>
+      </div>
+      {/* PROFILE SETTINGS MODAL – COMPACT & BEAUTIFUL (WITH MORE LANGUAGES) */}
+      {showUserDropdown && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/80 backdrop-blur-md z-50"
+            onClick={() => setShowUserDropdown(false)}
+          />
+
+          {/* Compact Modal */}
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+            <div
+              className="relative w-full max-w-md bg-black border border-gray-800 rounded-3xl shadow-2xl overflow-hidden pointer-events-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-800">
+                <div>
+                  <h2 className="text-xl font-bold text-white">Profile Settings</h2>
+                  <p className="text-sm text-gray-400 mt-1">Manage your account</p>
+                </div>
+                <button
+                  onClick={() => setShowUserDropdown(false)}
+                  className="p-2 rounded-xl hover:bg-gray-900 transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-400" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                {/* Email */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1.5">Email</label>
+                  <input
+                    type="email"
+                    value={user?.email || ""}
+                    readOnly
+                    className="w-full px-4 py-3 bg-gray-900/60 border border-gray-800 rounded-xl text-gray-300 text-sm"
+                  />
+                </div>
+
+                {/* Full Name */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1.5">Full Name</label>
+                  <input
+                    type="text"
+                    defaultValue={user?.user_metadata?.full_name || ""}
+                    placeholder="Your name"
+                    className="w-full px-4 py-3 bg-gray-900/80 border border-cyan-500/30 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                  />
+                </div>
+
+                {/* Phone */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1.5">Phone</label>
+                  <div className="flex">
+                    <span className="inline-flex items-center px-4 py-3 bg-gray-900/80 border border-cyan-500/30 border-r-0 rounded-l-xl text-gray-400 text-sm">
+                      India +91
+                    </span>
+                    <input
+                      type="tel"
+                      placeholder="98765 43210"
+                      className="flex-1 px-4 py-3 bg-gray-900/80 border border-cyan-500/30 rounded-r-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Language — NOW 12 LANGUAGES */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1.5">Language</label>
+                  <select className="w-full px-4 py-3 bg-gray-900/80 border border-cyan-500/30 rounded-xl text-white text-sm focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all">
+                    <option>English</option>
+                    <option>हिन्दी (Hindi)</option>
+                    <option>தமிழ் (Tamil)</option>
+                    <option>తెలుగు (Telugu)</option>
+                    <option>ಕನ್ನಡ (Kannada)</option>
+                    <option>മലയാളം (Malayalam)</option>
+                    <option>বাংলা (Bengali)</option>
+                    <option>मराठी (Marathi)</option>
+                    <option>ગુજરાતી (Gujarati)</option>
+                    <option>ਪੰਜਾਬੀ (Punjabi)</option>
+                    <option>Español</option>
+                    <option>Français</option>
+                  </select>
+                </div>
+
+                {/* Update Button */}
+                <button className="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-xl hover:from-cyan-400 hover:to-blue-500 transition-all shadow-lg text-sm">
+                  Update Profile
+                </button>
+
+                {/* Logout */}
+                <div className="pt-4 border-t border-gray-800">
+                  <button
+                    onClick={async () => {
+                      setShowUserDropdown(false);
+                      await supabase.auth.signOut();
+                      window.location.href = "/auth";
+                    }}
+                    className="w-full py-3 flex items-center justify-center gap-2.5 text-red-400 font-medium rounded-xl hover:bg-red-900/20 transition-all text-sm"
+                  >
+                    <LogOut className="w-4.5 h-4.5" />
+                    Log Out
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
       {/* Main Content */}
       <div className={cn(
         "transition-all duration-300",
@@ -1494,6 +1645,8 @@ const createNewSession = async () => {
           </div>
         ) : (
           /* Chat Interface */
+          
+          
           <>
             {/* Header/Partition with Menu - Mobile Only */}
             {isMobile && (
@@ -1527,269 +1680,215 @@ const createNewSession = async () => {
                 </div>
               </div>
             )}
-            {/* Chat Columns */}
-            <div className={cn(
-              "overflow-x-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800/50",
-              isMobile ? "h-screen pt-16 pb-24" : "h-[calc(100vh-70px)] pb-20"
-            )}>
-              <div className="flex h-full">
-               {AI_MODELS
-  .filter(m => !showFreeOnly || !m.locked)  // ← This is your working filter
-  .map((model) => {
-                  const modelId = model.id;
-                  const isSelected = selectedModels.includes(modelId);
-                  const response = responses.find(r => r.modelId === modelId);
-                  const hasMessages = messages.length > 0;
-                  return (
-                    <div
-                            key={modelId}
-                            className={cn(
-                              "relative flex flex-col transition-all duration-300 backdrop-blur-sm border",
-                              isSelected
-                                ? darkMode
-                                  ? isMobile
-                                    ? "bg-slate-800 border-slate-600 shadow-2xl w-[90vw] h-full"
-                                    : "bg-slate-800 border-slate-600 shadow-2xl w-[600px] h-full"
-                                  : isMobile
-                                    ? "bg-white border-slate-300 shadow-2xl w-[90vw] h-full"
-                                    : "bg-white border-slate-300 shadow-2xl w-[600px] h-full"
-                                : darkMode
-                                  ? "bg-black/90 border-gray-800 w-[60px]"
-                                  : "bg-white/50 border-slate-300/50 w-[60px]"
-                            )}
-                          >
-                            {/* FULL-SCREEN PREMIUM LOCK WHEN COLLAPSED */}
-                                                        {model.locked && !isSelected && (
-                              <div
-                                className="absolute inset-0 bg-black/80 backdrop-blur-sm z-40 flex flex-col items-center justify-center gap-4"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <div className="w-14 h-14 bg-violet-600/30 rounded-xl flex items-center justify-center">
-                                  <Lock className="w-8 h-8 text-violet-300" />
-                                </div>
-                                <p className="text-white font-semibold text-lg">Premium Locked</p>
-                                <p className="text-violet-300 text-3xl font-bold">₹499/mo</p>
-                              </div>
-                            )}
-                            {/* HEADER */}
-                            <div className="p-4 border-b border-slate-600 z-10 bg-inherit">
-                              {isSelected ? (
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10">
-                                      {typeof model.icon === 'function' ? model.icon(darkMode) : model.icon}
-                                    </div>
-                                    <div>
-                                      <h3 className="font-bold text-lg text-white flex items-center gap-2">
-  {model.name}
-  
-  {/* FREE BADGE – only for free models */}
-  {!model.locked && (
-    <span className="px-3 py-1 text-xs font-bold bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-full shadow-lg animate-pulse">
-      FREE
-    </span>
+           {/* MODEL HEADER – EXACTLY LIKE YOUR SCREENSHOT (FIXED – NO ERRORS) */}
+           {/* CHAT COLUMNS – FINAL, NO ERRORS, EXACTLY LIKE YOUR SCREENSHOT */}
+<div
+  className={cn(
+    "overflow-x-auto scrollbar-thin transition-colors duration-300",
+    // Light mode = white bg + black text | Dark mode = black bg + white text
+    darkMode
+      ? "bg-black text-white scrollbar-thumb-gray-700 scrollbar-track-gray-900"
+      : "bg-white text-black scrollbar-thumb-gray-400 scrollbar-track-gray-100",
+    isMobile ? "h-screen pt-16 pb-24" : "h-[calc(100vh-70px)] pb-20"
   )}
-  
-  {/* PRO BADGE – only for premium (now in violet to match your UI) */}
-  {model.locked && (
-    <span className="px-3 py-1 text-xs font-bold bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-full shadow-lg">
-      Pro · ₹499
-    </span>
+>
+
+  <div className="flex h-full min-w-fit">
+    {AI_MODELS.sort((a, b) => (a.locked ? 1 : -1)).map((model) => {
+      const modelId = model.id;
+      const isSelected = selectedModels.includes(modelId);
+
+      return (
+<div
+  key={modelId}
+  className={cn(
+    "relative flex flex-col transition-all duration-500 border-r",
+    darkMode ? "border-gray-900" : "border-gray-200",
+    isSelected
+      ? cn("flex-1 min-w-[520px]", darkMode ? "bg-black" : "bg-white")
+      : cn("w-16 cursor-pointer", darkMode ? "bg-black/70 hover:bg-black/90" : "bg-gray-50 hover:bg-gray-100")
   )}
-</h3>
-                                      <p className="text-sm text-gray-400">{model.provider}</p>
-                                    </div>
-                                  </div>
+  onClick={() => !isSelected && handleModelToggle(modelId)}
+>
+          {/* HEADER */}
+          <div
+  className={cn(
+    "border-b z-20 backdrop-blur-xl",
+    isSelected ? "px-4 pt-3 pb-3" : "px-3 pt-6",
+    darkMode
+      ? "bg-black/95 border-gray-900"
+      : "bg-white/90 border-gray-200"
+  )}
+>
+            {isSelected ? (
+              /* EXPANDED – Name + Locked + Toggle */
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 flex-shrink-0">
+                    {typeof model.icon === "function" ? model.icon(true) : model.icon}
+                  </div>
+                  <span className="text-white font-medium text-sm truncate max-w-40">
+                    {model.name}
+                  </span>
+                </div>
 
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (model.locked) {
-                                        setAttemptedPremiumModel(model.name);
-                                        setShowPremiumModal(true);
-                                      } else {
-                                        handleModelToggle(modelId);
-                                      }
-                                    }}
-                                    className={cn(
-                                      "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
-                                      isSelected ? "bg-violet-600" : "bg-gray-700",
-                                      model.locked && "opacity-50 cursor-not-allowed"
-                                    )}
-                                    disabled={model.locked}
-                                  >
-                                    <span className={cn(
-                                      "inline-block h-5 w-5 rounded-full bg-white shadow-lg transition-transform",
-                                      isSelected ? "translate-x-6" : "translate-x-1"
-                                    )} />
-                                  </button>
-                                </div>
-                              ) : (
-                                <div className="flex flex-col items-center py-6">
-                                  <div className="w-8 h-8 opacity-60">
-                                    {typeof model.icon === 'function' ? model.icon(darkMode) : model.icon}
-                                  </div>
-                                  {model.locked && <Lock className="w-8 h-8 text-yellow-500 mt-3" />}
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (model.locked) {
-                                        setAttemptedPremiumModel(model.name);
-                                        setShowPremiumModal(true);
-                                      } else {
-                                        handleModelToggle(modelId);
-                                      }
-                                    }}
-                                    className="mt-4 w-8 h-8 flex items-center justify-center"
-                                  >
-                                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                    </svg>
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-
-                            {/* CHAT CONTENT – PREMIUM IS BLOCKED */}
-                            <div className={cn("flex-1 overflow-y-auto", isSelected ? "block" : "hidden")}>
-                                                            {model.locked ? (
-                                <div className="h-full flex items-center justify-center px-6 py-12">
-                                  <div className="text-center max-w-sm">
-                                    <div className="mx-auto w-16 h-16 mb-6 bg-violet-600/20 rounded-2xl flex items-center justify-center">
-                                      <Lock className="w-9 h-9 text-violet-400" />
-                                    </div>
-
-                                    <h3 className="text-2xl font-bold text-white mb-2">
-                                      Premium Model Locked
-                                    </h3>
-                                    <p className="text-gray-400 text-sm mb-8 leading-relaxed">
-                                      Unlock <span className="text-violet-300 font-semibold">{model.name}</span> and all Pro models
-                                    </p>
-
-                                    <div className="mb-8">
-                                      <p className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-purple-400">
-                                        ₹499
-                                      </p>
-                                      <p className="text-gray-500 text-sm mt-1">per month</p>
-                                    </div>
-
-                                    <button
-                                      onClick={() => {
-                                        setAttemptedPremiumModel(model.name);
-                                        setShowPremiumModal(true);
-                                      }}
-                                      className="w-full py-4 px-8 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold text-lg rounded-2xl shadow-xl transform transition-all duration-200 hover:scale-105 active:scale-95"
-                                    >
-                                      Subscribe Now
-                                    </button>
-
-                                    <p className="text-xs text-gray-500 mt-6">
-                                      Instant access • Cancel anytime
-                                    </p>
-                                  </div>
-                                </div>
-                              ) : (
-                                /* ←←← YOUR ORIGINAL MESSAGE RENDERING CODE GOES HERE ←←← */
-                                <div className="space-y-6 p-6">
-                                  {/* Paste your old message rendering code here (the part that was inside the old card) */}
-                                  {/* Example from your code: */}
-                                                                  </div>
-                              )}
-                              {/* === FINAL WORKING CHAT RENDERING === */}
-                              <div className="space-y-6 p-6 flex-1 overflow-y-auto">
-                                {/* Past messages from history */}
-                                {messages
-                                  .filter(msg => msg.role === 'user' || msg.modelId === modelId)
-                                  .map((msg, i) => (
-                                    <div key={msg.id || i} className="mb-6">
-                                      {msg.role === 'user' ? (
-                                        <div className="flex items-start gap-4">
-                                          <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                                            <User className="w-4 h-4 text-white" />
-                                          </div>
-                                          <div className="flex-1">
-                                            <p className="text-base leading-relaxed text-white">{msg.content}</p>
-                                          </div>
-                                        </div>
-                                      ) : (
-                                        <div className="flex items-start gap-4">
-                                          <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 mt-1">
-                                            {typeof model.icon === 'function' ? model.icon(darkMode) : model.icon}
-                                          </div>
-                                          <div className="flex-1">
-                                            <p className="text-base leading-relaxed whitespace-pre-wrap text-white">
-                                              {msg.content}
-                                            </p>
-                                          </div>
-                                        </div>
-                                      )}
-                                    </div>
-                                  ))}
-
-                                {/* CURRENT LIVE RESPONSE */}
-                                {(() => {
-                                  const resp = responses.find(r => r.modelId === modelId);
-                                  if (!resp) return null;
-
-                                  if (resp.isLoading) {
-                                    return (
-                                      <div className="flex items-start gap-4">
-                                        <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 mt-1">
-                                          {typeof model.icon === 'function' ? model.icon(darkMode) : model.icon}
-                                        </div>
-                                        <div className="flex items-center gap-2 text-gray-400">
-                                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
-                                          <span>Thinking...</span>
-                                        </div>
-                                      </div>
-                                    );
-                                  }
-
-                                  if (resp.error) {
-                                    return (
-                                      <div className="flex items-start gap-4 text-red-400 text-sm">
-                                        <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 mt-1">
-                                          {typeof model.icon === 'function' ? model.icon(darkMode) : model.icon}
-                                        </div>
-                                        <div>{resp.error}</div>
-                                      </div>
-                                    );
-                                  }
-
-                                  if (resp.content) {
-                                    return (
-                                      <div className="flex items-start gap-4">
-                                        <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 mt-1">
-                                          {typeof model.icon === 'function' ? model.icon(darkMode) : model.icon}
-                                        </div>
-                                        <div className="flex-1">
-                                          <p className="text-base leading-relaxed whitespace-pre-wrap text-white">
-                                            {resp.content}
-                                          </p>
-                                        </div>
-                                      </div>
-                                    );
-                                  }
-
-                                  return null;
-                                })()}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
+                <div className="flex items-center gap-3">
+                  {model.locked && (
+                    <div className="flex items-center gap-1.5 text-gray-500 text-xs font-medium">
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>Locked</span>
+                    </div>
+                  )}
+                  <button
+                  
+                    disabled={model.locked}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      !model.locked && handleModelToggle(modelId);
+                    }}
+                    className={cn(
+                      "relative w-9 h-5 rounded-full transition-all duration-200",
+                      model.locked ? "bg-gray-800" : isSelected ? "bg-cyan-500" : "bg-gray-700"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-md transition-transform duration-200",
+                        isSelected && !model.locked ? "translate-x-4" : "translate-x-0"
+                      )}
+                    />
+                  </button>
+                </div>
               </div>
+            ) : (
+              /* COLLAPSED – ONLY ICON (click to expand) */
+              <div className="flex justify-center">
+                <div className="w-7 h-7 opacity-70">
+                  {typeof model.icon === "function" ? model.icon(true) : model.icon}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* UPGRADE PILL – ONLY FOR LOCKED MODELS */}
+          {isSelected && model.locked && (
+            <div className="px-4 py-4 bg-black/95 border-b border-gray-900">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowPremiumModal(true);
+                }}
+                className="w-full py-3.5 bg-white/10 hover:bg-white/15 backdrop-blur-xl border border-white/20 rounded-2xl text-white font-medium text-sm transition-all hover:scale-105 active:scale-95 shadow-lg"
+              >
+                Upgrade to unlock
+              </button>
             </div>
+          )}
+
+          {/* MESSAGES */}
+{/* MESSAGES + RESPONSE + THINKING + ERROR — FINAL BULLETPROOF VERSION */}
+{isSelected && (
+  <div className="flex-1 overflow-y-auto px-5 py-6 space-y-7">
+
+    {/* USER & OLD MESSAGES */}
+    {messages
+      .filter((m) => m.modelId === modelId || m.role === "user")
+      .map((msg, i) => (
+        <div key={i} className="flex items-start gap-3.5">
+          <div className="flex-shrink-0">
+            {msg.role === "user" ? (
+              <div className="w-9 h-9 bg-cyan-500/20 rounded-full flex items-center justify-center ring-2 ring-cyan-500/30">
+                <User className="w-5 h-5 text-cyan-300" />
+              </div>
+            ) : (
+              <div className="w-9 h-9">
+                {typeof model.icon === "function" ? model.icon(true) : model.icon}
+              </div>
+            )}
+          </div>
+          <p className={msg.role === "user" ? "text-white font-medium" : "text-gray-200 font-light"}>
+            {msg.content}
+          </p>
+        </div>
+      ))}
+
+    {/* CURRENT RESPONSE — THINKING / ERROR / ANSWER */}
+    {(() => {
+      // Find response by exact ID or partial match (fixes Mistral/Google issue)
+      const resp = responses.find(r => r.modelId === modelId) ||
+                   responses.find(r => r.modelId.includes(modelId)) ||
+                   responses.find(r => modelId.includes(r.modelId));
+
+      if (!resp) return null;
+
+      if (resp.isLoading) {
+        return (
+          <div className="flex items-center gap-3.5 text-gray-400">
+            <div className="w-9 h-9">
+              {typeof model.icon === "function" ? model.icon(true) : model.icon}
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm">Thinking...</span>
+            </div>
+          </div>
+        );
+      }
+
+      if (resp.error) {
+        return (
+          <div className="flex items-start gap-3.5 px-5 py-4 bg-red-500/10 border border-red-500/30 rounded-2xl">
+            <div className="w-9 h-9">
+              {typeof model.icon === "function" ? model.icon(true) : model.icon}
+            </div>
+            <div className="text-red-300 text-sm leading-relaxed">
+              <strong>Error:</strong> {resp.error}
+              <br />
+              <a href="https://openrouter.ai/billing" target="_blank" className="underline text-xs">
+                Add $10 credits for unlimited access
+              </a>
+            </div>
+          </div>
+        );
+      }
+
+      if (resp.content) {
+        return (
+          <div className="flex items-start gap-3.5">
+            <div className="w-9 h-9">
+              {typeof model.icon === "function" ? model.icon(true) : model.icon}
+            </div>
+            <p className="text-gray-200 font-light whitespace-pre-wrap">
+              {resp.content}
+            </p>
+          </div>
+        );
+      }
+
+      return null;
+    })()}
+  </div>
+)}
+          
+        </div>
+      );
+    })}
+  </div>
+</div>
+
             {/* Bottom Message Input */}
             <div className={cn(
-              "fixed backdrop-blur-xl shadow-2xl transition-all duration-300 border-2 z-10 max-w-4xl mx-auto",
-              darkMode
-                ? "bg-slate-800/90 border-slate-600"
-                : "bg-white/95 border-slate-300",
-              isMobile
-                ? "bottom-0 left-0 right-0 rounded-t-2xl"
-                : sidebarCollapsed ? "bottom-8 left-20 right-6 rounded-2xl" : "bottom-8 left-72 right-6 rounded-2xl"
-            )}>
+  "fixed backdrop-blur-xl shadow-2xl transition-all duration-300 border-2 z-10 max-w-4xl mx-auto rounded-2xl",
+  // Dynamic background & border based on theme
+  darkMode 
+    ? "bg-black/95 border-gray-800" 
+    : "bg-white/95 border-gray-300",
+  isMobile
+    ? "bottom-0 left-0 right-0 rounded-t-2xl"
+    : sidebarCollapsed 
+      ? "bottom-8 left-20 right-6" 
+      : "bottom-8 left-72 right-6"
+)}>
               <div className="flex items-center p-2">
                 {/* Left Action Buttons */}
                 <div className="flex items-center gap-1 mr-2">
@@ -1799,7 +1898,8 @@ const createNewSession = async () => {
                       className="p-2 rounded-full hover:bg-slate-700 transition"
                       title="Web Search"
                     >
-                      🔍
+                      <Globe className="text-xl sm:text-2xl text-cyan-300" aria-hidden="true" />
+
                     </button>
                     <button
                       onClick={() => setShowPhotoOptions(!showPhotoOptions)}
@@ -1811,7 +1911,8 @@ const createNewSession = async () => {
                       )}
                       title="Add Photo"
                     >
-                      <Plus className="w-5 h-5" />
+                     <Plus className="w-5 h-5 text-cyan-300" />
+
                     </button>
                     {/* Photo Options Dropdown */}
                     {showPhotoOptions && (
@@ -1856,7 +1957,8 @@ const createNewSession = async () => {
                     )}
                     title="Attach Files"
                   >
-                    <Paperclip className="w-5 h-5" />
+                   <Paperclip className="w-5 h-5 text-cyan-300" />
+
                   </button>
                   {/* Hidden file inputs */}
                   <input
@@ -1927,20 +2029,21 @@ const createNewSession = async () => {
                     onKeyPress={handleKeyPress}
                     placeholder="Ask me anything..."
                     className={cn(
-                      "w-full rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50 border-2 transition-all duration-200",
-                      darkMode
-                        ? "bg-slate-700/60 text-white placeholder-slate-400 border-slate-600 focus:border-violet-500"
-                        : "bg-slate-50 text-slate-800 placeholder-slate-500 border-slate-300 focus:border-violet-500"
-                    )}
+  "w-full rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/60 border-2 transition-all duration-200",
+  darkMode
+    ? "bg-slate-800/80 text-white placeholder-slate-400 border-slate-700 focus:border-cyan-400"
+    : "bg-white text-black placeholder-gray-500 border-gray-300 focus:border-cyan-500"
+)}
+
                     disabled={selectedModels.length === 0 || isLoading}
                   />
                   {isRecording && (
-  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-    <span className="text-xs px-2 py-1 rounded-full bg-red-500 text-white animate-pulse">
-      Listening...
-    </span>
-  </div>
-)}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <span className="text-xs px-2 py-1 rounded-full bg-red-500 text-white animate-pulse">
+                        Listening...
+                      </span>
+                    </div>
+                  )}
                   {selectedModels.length === 0 && (
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <span className={cn(
@@ -1955,33 +2058,34 @@ const createNewSession = async () => {
                 {/* Right Action Buttons */}
                 <div className="flex items-center gap-1 ml-2">
                   {recognition ? (
-  <button
-    onClick={() => {
-      if (isRecording) {
-        recognition.stop();
-        return;
-      }
+                    <button
+                      onClick={() => {
+                        if (isRecording) {
+                          recognition.stop();
+                          return;
+                        }
 
-      recognition.start();
-      setIsRecording(true);
-    }}
-    className={cn(
-      "p-2.5 transition-all duration-300 rounded-lg shadow-lg hover:scale-110",
-      isRecording
-        ? "bg-red-500 text-white animate-pulse"
-        : currentInput.trim() && selectedModels.length > 0 && !isLoading
-          ? "bg-green-500 text-white"
-          : "bg-slate-600/50 text-slate-400"
-    )}
-    title={isRecording ? "Stop recording" : "Speak"}
-  >
-    <Mic className={cn("w-5 h-5", isRecording && "animate-bounce")} />
-  </button>
-) : (
-  <button disabled className="p-2.5 bg-slate-600/50 text-slate-400 rounded-lg">
-    <Mic className="w-5 h-5" />
-  </button>
-)}
+                        recognition.start();
+                        setIsRecording(true);
+                      }}
+                      className={cn(
+                        "p-2.5 transition-all duration-300 rounded-lg shadow-lg hover:scale-110",
+                        isRecording
+                          ? "bg-red-500 text-white animate-pulse"
+                          : currentInput.trim() && selectedModels.length > 0 && !isLoading
+                            ? "bg-green-500 text-white"
+                            : "bg-slate-600/50 text-slate-400"
+                      )}
+                      title={isRecording ? "Stop recording" : "Speak"}
+                    >
+                      <Mic className={cn("w-5 h-5", isRecording && "animate-bounce")} />
+                    </button>
+                  ) : (
+                    <button disabled className="p-2.5 bg-slate-600/50 text-slate-400 rounded-lg">
+                     <Mic className="w-5 h-5 text-cyan-300" />
+
+                    </button>
+                  )}
                   <button
                     onClick={handleSendMessage}
                     disabled={!currentInput.trim() || selectedModels.length === 0 || isLoading}
@@ -1993,7 +2097,8 @@ const createNewSession = async () => {
                     )}
                     title="Send Message"
                   >
-                    <Send className="w-5 h-5" />
+                    <Send className="w-5 h-5 text-cyan-300" />
+
                   </button>
                 </div>
               </div>
@@ -2001,188 +2106,352 @@ const createNewSession = async () => {
           </>
         )}
       </div>
-      <div ref={messagesEndRef} />
-      {/* Settings Modal */}
-      {showSettings && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-slate-800 rounded-2xl p-6 w-full max-w-2xl mx-4 border border-slate-700 max-h-[85vh] overflow-y-auto scrollbar-dark">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-white">Settings</h2>
-              <button
-                onClick={() => setShowSettings(false)}
-                className="p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-slate-700/50"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            {/* Password Change Section */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-white">Change Password</h3>
-              <div className="space-y-3">
-                <input
-                  type="password"
-                  placeholder="Current Password"
-                  value={passwordChange.current}
-                  onChange={(e) => setPasswordChange(prev => ({ ...prev, current: e.target.value }))}
-                  className="w-full bg-slate-700/50 text-white rounded-lg px-4 py-3 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 border-2 border-slate-600"
-                />
-                <input
-                  type="password"
-                  placeholder="New Password"
-                  value={passwordChange.new}
-                  onChange={(e) => setPasswordChange(prev => ({ ...prev, new: e.target.value }))}
-                  className="w-full bg-slate-700/50 text-white rounded-lg px-4 py-3 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 border-2 border-slate-600"
-                />
-                <input
-                  type="password"
-                  placeholder="Confirm New Password"
-                  value={passwordChange.confirm}
-                  onChange={(e) => setPasswordChange(prev => ({ ...prev, confirm: e.target.value }))}
-                  className="w-full bg-slate-700/50 text-white rounded-lg px-4 py-3 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 border-2 border-slate-600"
-                />
-              </div>
-              <button
-                onClick={handlePasswordChange}
-                disabled={passwordLoading || !passwordChange.current || !passwordChange.new || !passwordChange.confirm}
-                className="w-full bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg py-3 px-4 font-medium hover:from-violet-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-              >
-                {passwordLoading ? 'Updating...' : 'Update Password'}
-              </button>
-              {/* AI Model Preferences */}
-              <div className="mt-8 pt-6 border-t border-slate-700">
-                <h3 className="text-lg font-semibold text-white mb-1">Customize your chat AI model preferences</h3>
-                <p className="text-slate-400 text-sm mb-6">
-                  Easily update your selections anytime in the settings
-                </p>
-                {prefLoading ? (
-                  <p className="text-slate-300">Loading...</p>
-                ) : (
-                  <div className="space-y-5">
-                    {AI_MODELS.map((m) => (
-                      <div key={m.id} className="flex items-center justify-between">
-                        <div className="flex items-start gap-4">
-                          <div className="w-7 h-7 flex items-center justify-center mt-0.5">
-                            {typeof m.icon === "function"
-                              ? (m.icon(darkMode) as React.ReactNode)
-                              : m.icon}
-                          </div>
-                          <div>
-                            <div className="text-white font-medium">{m.name}</div>
-                            <div className="text-slate-400 text-sm">
-                              {m.description}
-                            </div>
-                          </div>
-                        </div>
-                        {/* iOS-style toggle */}
-                        <label className="inline-flex items-center cursor-pointer select-none ml-4">
-                          <input
-                            type="checkbox"
-                            checked={prefSelected.includes(m.id)}
-                            onChange={() => togglePrefModel(m.id)}
-                            className="sr-only peer"
-                          />
-                          {/* FIX: Removed space in 'peer-checked:bg-violet-600' */}
-                          <span className="w-12 h-7 rounded-full transition-colors duration-200
-        bg-slate-600 peer-checked:bg-violet-600 relative">
-                            <span className="absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow
-            transition-all duration-200 peer-checked:left-6" />
-                          </span>
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {prefError && (
-                  <div className="mt-4 bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                    <p className="text-red-400 text-sm">{prefError}</p>
-                  </div>
-                )}
-                {prefMessage && (
-                  <div className="mt-4 bg-green-500/10 border border-green-500/20 rounded-lg p-3">
-                    <p className="text-green-400 text-sm">{prefMessage}</p>
-                  </div>
-                )}
-                <button
-                  onClick={savePreferences}
-                  disabled={prefSaving}
-                  className="mt-6 w-full bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg py-3 px-4 font-medium hover:from-violet-600 hover:to-purple-700 disabled:opacity-50 transition-all duration-200"
-                >
-                  {prefSaving ? 'Saving...' : 'Update preferences'}
-                </button>
-              </div>
-              {/* Sign Out Button */}
-              <div className="mt-6 pt-6 border-t border-slate-600">
-                <button
-                  onClick={() => {
-                    signOut();
-                    setShowSettings(false);
-                  }}
-                  className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white rounded-lg transition-colors"
-                >
-                  <LogOut className="w-5 h-5" />
-                  Sign Out
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-     {/* PREMIUM MODAL – VIOLET THEME */}
-{showPremiumModal && (
-  <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4 animate-fadeIn">
-    <div 
-      className="relative bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 border border-violet-500/30 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden animate-slideUp"
-      onClick={(e) => e.stopPropagation()}
-    >
-      {/* Close button */}
-      <button
-        onClick={() => setShowPremiumModal(false)}
-        className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all z-10"
-      >
-        <X className="w-6 h-6 text-gray-300" />
-      </button>
-
-      <div className="p-8 text-center">
-        {/* Elegant lock icon */}
-        <div className="mx-auto w-20 h-20 bg-violet-600/20 rounded-2xl flex items-center justify-center mb-6">
-          <Lock className="w-12 h-12 text-violet-400" />
-        </div>
-
-        <h2 className="text-3xl font-black text-white mb-3">
-          Unlock All Premium Models
-        </h2>
-        <p className="text-gray-300 text-lg mb-8">
-          Get instant access to <span className="text-violet-300 font-bold">{attemptedPremiumModel || "GPT-5, Claude, Gemini Pro"}</span> and more
-        </p>
-
-        {/* Price – Violet gradient */}
-        <div className="mb-10">
-          <p className="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-purple-400 to-violet-400">
-            ₹499
-          </p>
-          <p className="text-gray-400 text-lg">per month • billed monthly</p>
-        </div>
-
-        {/* Violet Subscribe Button – matches your app perfectly */}
+      {/* Web Search Modal – Add this entire block */}
+{showWebSearch && (
+  <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div className="relative w-full max-w-2xl bg-black rounded-2xl border border-gray-800 shadow-2xl max-h-[80vh] overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between p-6 border-b border-gray-800">
+        <div className="flex items-center gap-2">
+  <Globe className="w-5 h-5" />
+  <h2 className="text-lg font-semibold">Web Search</h2>
+</div>
         <button
           onClick={() => {
-            // Your payment logic here
-            alert("Payment integration coming soon! 🚀");
+            setShowWebSearch(false);
+            setWebQuery('');
+            setWebResults(null);
           }}
-          className="w-full py-5 px-8 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold text-xl rounded-2xl shadow-2xl transform transition-all duration-300 hover:scale-105 active:scale-95"
+          className="p-2 hover:bg-gray-800 rounded-lg transition"
         >
-          Subscribe Now
+          <X className="w-5 h-5 text-gray-400" />
         </button>
+      </div>
 
-        <div className="mt-8 space-y-3 text-sm text-gray-400">
-          <p>Instant activation • No commitment</p>
-          <p>Cancel anytime from settings</p>
-          <p className="text-violet-300">Made with love in India</p>
+      {/* Search Form */}
+      <form onSubmit={handleWebSearch} className="p-6 border-b border-gray-800">
+        <div className="relative">
+          <input
+            type="text"
+            value={webQuery}
+            onChange={(e) => setWebQuery(e.target.value)}
+            placeholder="Ask Google anything..."
+            className="w-full px-4 py-3 bg-gray-900/70 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+          />
+          <button
+            type="submit"
+            disabled={!webQuery.trim()}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-cyan-400 disabled:opacity-50"
+          >
+            <Search className="w-5 h-5" /> {/* Add import: import { Search } from 'lucide-react'; */}
+          </button>
         </div>
+      </form>
+
+      {/* Results */}
+      {webResults && (
+        <div className="p-6 max-h-96 overflow-y-auto space-y-4">
+          <div className="bg-gray-900/50 rounded-xl p-4">
+            <h4 className="font-semibold text-white mb-2">Answer:</h4>
+            <p className="text-gray-300 whitespace-pre-wrap">{webResults}</p>
+          </div>
+          {/* Optional: Add links if you want full results */}
+          {/* {data.items?.map((item: any, i: number) => ( ... ))} */}
+        </div>
+      )}
+
+      {isLoading && ( // Add a loading state if needed
+        <div className="p-6 text-center text-gray-400">Searching Google...</div>
+      )}
+    </div>
+  </div>
+)}
+      <div ref={messagesEndRef} />
+
+      {/* Settings Modal */}
+
+      {/* PREMIUM MODAL – VIOLET THEME */}
+      {/* COMPACT UPGRADE MODAL – MATCHES YOUR UI PERFECTLY */}
+{showPremiumModal && (
+  <div 
+    className="fixed inset-0 bg-black/70 backdrop-blur-xl z-[9999] flex items-center justify-center p-4"
+    onClick={() => setShowPremiumModal(false)}
+  >
+    <div 
+      className="relative w-full max-w-md bg-black/95 backdrop-blur-2xl rounded-3xl border border-cyan-500/30 shadow-2xl overflow-hidden"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Close Button - Top Right */}
+      <button
+        onClick={() => setShowPremiumModal(false)}
+        className="absolute top-4 right-4 z-10 p-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-all"
+      >
+        <X className="w-5 h-5 text-gray-300" />
+      </button>
+
+      {/* Header */}
+      <div className="p-8 pt-12 text-center border-b border-gray-800">
+        <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-xl">
+          <Crown className="w-9 h-9 text-white" />
+        </div>
+        <h3 className="text-2xl font-black text-white mb-2">Upgrade to Premium</h3>
+        <p className="text-gray-400 text-sm">Unlock all premium models instantly</p>
+      </div>
+
+      {/* Plans */}
+      <div className="p-6 space-y-4">
+        {/* Monthly */}
+        <div className="bg-gray-900/50 rounded-2xl p-5 border border-gray-800 hover:border-cyan-500/50 transition-all">
+          <div className="flex justify-between items-center mb-3">
+            <div>
+              <p className="text-3xl font-black text-white">₹999<span className="text-lg text-gray-400">/month</span></p>
+            </div>
+            <button className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-white font-semibold text-sm transition-all">
+              Monthly
+            </button>
+          </div>
+        </div>
+
+        {/* Yearly - Highlighted */}
+        <div className="relative bg-gradient-to-r from-cyan-900/20 to-blue-900/20 rounded-2xl p-5 border-2 border-cyan-500/60 shadow-lg shadow-cyan-500/20">
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-cyan-500 text-black text-xs font-bold rounded-full">
+            BEST VALUE
+          </div>
+          <div className="flex justify-between items-center mb-3">
+            <div>
+              <p className="text-3xl font-black text-white">₹8,999<span className="text-lg text-gray-400">/year</span></p>
+              <p className="text-cyan-400 text-sm font-semibold">Save ₹2,989/year</p>
+            </div>
+            <button className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 rounded-xl text-white font-bold text-sm shadow-lg transition-all transform hover:scale-105">
+              Get Yearly Plan
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Features */}
+      <div className="px-6 pb-6">
+        <ul className="space-y-3 text-sm">
+          {[
+            "All premium models (GPT-5, Claude, Gemini Pro, Grok-2)",
+            "Unlimited side-by-side comparison",
+            "Image generation & voice input",
+            "Priority support + future updates free"
+          ].map((feat, i) => (
+            <li key={i} className="flex items-center gap-3">
+              <Check className="w-5 h-5 text-cyan-400 flex-shrink-0" />
+              <span className="text-gray-300">{feat}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Footer */}
+      <div className="px-6 py-4 bg-gray-900/50 text-center text-xs text-gray-500 border-t border-gray-800">
+        Instant activation • Cancel anytime • Made in India
       </div>
     </div>
   </div>
 )}
+      
+            {/* REUSABLE MODEL PREFERENCES – First Time + Settings (Perfect Match) */}
+      {/* NEW BEAUTIFUL MODEL PREFERENCES PANEL – LIKE YOUR SCREENSHOT */}
+      {/* FINAL VERSION – EXACTLY LIKE YOUR SCREENSHOT (no badge, smaller everything) */}
+      {/* FINAL – BLACK PANEL, ONE-LINE TITLE, X ICON, LIGHT-BLUE BUTTON */}
+      {(showFirstTimePreferences || showModelPreferences) && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-2xl z-[9999] flex items-center justify-center p-4">
+          <div className="relative w-full max-w-lg bg-black rounded-3xl shadow-2xl border border-gray-800 overflow-hidden">
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-8 py-6 border-b border-gray-800">
+              <h2 className="text-xl font-semibold text-white">
+                Customize your chat AI model preferences
+              </h2>
+              <button
+                onClick={() => {
+                  setShowModelPreferences(false);
+                  setShowFirstTimePreferences(false);
+                }}
+                className="p-2 hover:bg-gray-800 rounded-lg transition"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+
+            {/* SUCCESS MESSAGE – White box with green text */}
+            {showSuccessMessage && (
+              <div className="mx-5 mt-5 p-4 bg-white rounded-xl flex items-center gap-3 animate-in slide-in-from-top duration-300">
+                <Check className="w-6 h-6 text-green-500 flex-shrink-0" />
+                <p className="text-green-600 font-semibold">
+                  Updated model preferences successfully
+                </p>
+              </div>
+            )}
+
+            {/* Model List */}
+            <div className={cn("p-5 space-y-3 max-h-96 overflow-y-auto", showSuccessMessage && "mt-2")}>
+              {AI_MODELS.map((model) => {
+                const isFree = !model.locked;
+                const isSelected = prefSelected.includes(model.id);
+
+                return (
+                  <div
+                    key={model.id}
+                    className="flex items-center justify-between py-4 px-5 rounded-xl bg-gray-900/40 hover:bg-gray-900/70 transition"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10">
+                        {typeof model.icon === "function" ? model.icon(true) : model.icon}
+                      </div>
+                      <div>
+                        <p className="text-white font-medium text-base">{model.name}</p>
+                        <p className="text-gray-500 text-xs mt-0.5">{model.provider}</p>
+                      </div>
+                    </div>
+
+                    {isFree ? (
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => togglePrefModel(model.id)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-gray-700 rounded-full peer peer-checked:after:translate-x-4 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-500"></div>
+                      </label>
+                    ) : (
+                      <div className="w-9 h-5 bg-gray-800 rounded-full flex items-center justify-center">
+                        <Lock className="w-4 h-4 text-gray-600" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Button */}
+            <div className="p-5 border-t border-gray-800">
+              <button
+                onClick={savePreferences}
+                disabled={prefSaving || prefSelected.length === 0}
+                className="w-full py-4 bg-cyan-500 hover:bg-cyan-400 disabled:bg-gray-700 disabled:text-gray-500 text-white font-semibold text-base rounded-xl transition-all shadow-lg"
+              >
+                {prefSaving ? "Saving..." : "Update preferences"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* CREATE NEW PROJECT MODAL – EXACTLY LIKE YOUR DESIGN */}
+      {showProjectModal && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50"
+            onClick={() => setShowProjectModal(false)}
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div
+              className="relative w-full max-w-2xl bg-[#0f0f0f] rounded-2xl shadow-2xl border border-gray-800"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-800">
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Create new project</h2>
+                  <p className="text-gray-400 text-sm mt-1">Fill in the details below to create a new project.</p>
+                </div>
+                <button
+                  onClick={() => setShowProjectModal(false)}
+                  className="p-2 hover:bg-gray-800 rounded-lg transition"
+                >
+                  <X className="w-6 h-6 text-gray-400" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                {/* Project Name */}
+                <div>
+                  <label className="block text-lg font-medium text-white mb-3">Project name</label>
+                  <input
+                    type="text"
+                    value={projectName}
+                    onChange={(e) => setProjectName(e.target.value)}
+                    placeholder="Enter a name for your project (max 50 characters)"
+                    maxLength={50}
+                    className="w-full px-5 py-4 bg-gray-900/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                  />
+                </div>
+
+                {/* System Prompt */}
+                <div>
+                  <label className="block text-lg font-medium text-white mb-3">System prompt</label>
+                  <textarea
+                    value={systemPrompt}
+                    onChange={(e) => setSystemPrompt(e.target.value)}
+                    placeholder="Enter a system prompt for chats in this project (max 5000 characters)"
+                    maxLength={5000}
+                    rows={8}
+                    className="w-full px-5 py-4 bg-gray-900/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all resize-none"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    All chats in this project will use this as the system prompt sent to the AI model.
+                  </p>
+                </div>
+
+                {/* Create Button */}
+                <div className="flex justify-center pt-4">
+                  <button
+                    onClick={() => {
+                      if (!projectName.trim()) {
+                        alert("Please enter a project name");
+                        return;
+                      }
+                      alert(`Project "${projectName}" created successfully!`);
+                      setShowProjectModal(false);
+                      setProjectName('');
+                      setSystemPrompt('');
+                    }}
+                    disabled={!projectName.trim()}
+                    className="px-12 py-4 font-bold text-white rounded-xl transition-all duration-200 shadow-lg bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 active:scale-95 disabled:bg-gray-600 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    Create project
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+      {/* PERFECT LIGHT MODE – WHITE PAGE + BLACK TEXT */}
+<style jsx global>{`
+  html.light,
+  body.light {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  html.light *,
+  body.light * {
+    color: #000000 !important;
+    border-color: #e5e5e5 !important;
+  }
+
+  /* Keep your beautiful buttons & cyan accents */
+  html.light .text-cyan-300,
+  html.light .text-cyan-400,
+  html.light .text-violet-400,
+  html.light .bg-cyan-500,
+  html.light .bg-gradient-to-r,
+  html.light svg {
+    color: inherit !important;
+  }
+
+  /* Fix input placeholders */
+  html.light input::placeholder,
+  html.light textarea::placeholder {
+    color: #555 !important;
+  }
+`}</style>
     </div>
 
   );

@@ -1,53 +1,52 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const query = searchParams.get("q");
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const q = searchParams.get("q");
 
-  if (!query) {
-    return NextResponse.json({ error: "Missing query" }, { status: 400 });
+  if (!q) {
+    return NextResponse.json({ error: "Query is required" }, { status: 400 });
+  }
+
+  const apiKey = process.env.GOOGLE_API_KEY;
+  const cx = process.env.GOOGLE_SEARCH_CX;
+
+  if (!apiKey || !cx) {
+    return NextResponse.json(
+      { error: "Google API credentials missing" },
+      { status: 500 }
+    );
   }
 
   try {
-    const apiKey = process.env.GOOGLE_API_KEY;
-    const cx = process.env.GOOGLE_SEARCH_CX;
+    const response = await fetch(
+      `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(
+        q
+      )}&num=5`
+    );
 
-    if (!apiKey || !cx) {
-      console.error("Missing API credentials in environment variables.");
-      return NextResponse.json({ error: "Server misconfiguration" }, { status: 500 });
+    if (!response.ok) throw new Error("Google API request failed");
+
+    const data = await response.json();
+
+    if (!data.items || data.items.length === 0) {
+      return NextResponse.json({
+        answer: "No results found.",
+      });
     }
 
-    const url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(
-      query
-    )}&key=${apiKey}&cx=${cx}`;
+    // Build full answer from all results
+    let fullAnswer = `🔍 **Web Search Results for:** ${q}\n\n`;
 
-    const res = await fetch(url);
-    const data = await res.json();
+    data.items.forEach((item: any, index: number) => {
+      fullAnswer += `### ${index + 1}. ${item.title}\n`;
+      fullAnswer += `${item.snippet || "No snippet available."}\n`;
+      fullAnswer += `**Source:** ${item.link}\n\n`;
+    });
 
-    // Debug: Log full response to terminal
-    console.log("🔍 Google API Response:", JSON.stringify(data, null, 2));
-
-    if (data.error) {
-      return NextResponse.json(
-        { error: `Google API Error: ${data.error.message}` },
-        { status: 500 }
-      );
-    }
-
-   const items = data.items || [];
-const answer =
-  items.length > 0
-    ? items
-        .map(
-          (item: { title?: string; snippet?: string; link?: string }) =>
-            `• ${item.title ?? "No title"}\n${item.snippet ?? ""}\n${item.link ?? ""}\n`
-        )
-        .join("\n\n")
-    : "No results found.";
-
-return NextResponse.json({ answer });
-} catch (err: unknown) {
-  console.error("Google Search API error:", err);
-  return NextResponse.json({ error: "Failed to fetch search results" }, { status: 500 });
-}
+    return NextResponse.json({ answer: fullAnswer });
+  } catch (error) {
+    console.error("Google Search Error:", error);
+    return NextResponse.json({ error: "Search failed" }, { status: 500 });
+  }
 }
