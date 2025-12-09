@@ -328,6 +328,7 @@ export default function Home() {
   const [hasSavedPreferences, setHasSavedPreferences] = useState<boolean | null>(null);
   const [showFreeOnly, setShowFreeOnly] = useState(true);   // true = show free only
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   async function handleWebSearch(e: React.FormEvent) {
   e.preventDefault();
@@ -401,6 +402,15 @@ useEffect(() => {
   const [recentSessions, setRecentSessions] = useState<{ id: string, title: string, firstMessage: string, date: string }[]>([]);
   const [recentSessionsLoading, setRecentSessionsLoading] = useState(true);
   const [recentSessionsError, setRecentSessionsError] = useState(false);
+  const filteredSessions = recentSessions.filter((session) => {
+  const q = searchQuery.toLowerCase();
+
+  return (
+    session.title.toLowerCase().includes(q) ||
+    session.firstMessage?.toLowerCase().includes(q)
+  );
+});
+
   // State for file attachments
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [showPhotoOptions, setShowPhotoOptions] = useState(false);
@@ -814,30 +824,39 @@ const formatRelativeTime = (date: Date) => {
   );
 };
 
- const createNewSession = async () => {
-  if (!user) return null;
-
-  const now = new Date().toISOString();
-
-  const { data, error } = await supabase
-    .from('chat_sessions')
-    .insert({
-  user_id: user.id,
-  title: 'New Chat',
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-})
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Create session error:', error);
+const createNewSession = async () => {
+  if (!user) {
+    console.log("❌ No user found when creating session");
     return null;
   }
 
-  await loadRecentSessions(); // Refresh immediately
-  return data.id;
+  console.log("🟡 Creating session for user:", user.id);
+
+  try {
+    const { data, error } = await supabase
+      .from("chat_sessions")
+      .insert([
+        {
+          user_id: user.id,
+          title: "New Chat",
+        },
+      ])
+      .select();
+
+    console.log("🟢 SESSION INSERT RESULT:", { data, error });
+
+    if (error) {
+      console.error("❌ Failed to create session:", error);
+      return null;
+    }
+
+    return data?.[0] ?? null;
+  } catch (error) {
+    console.error("❌ Unexpected error creating session:", error);
+    return null;
+  }
 };
+
   const saveMessageToDatabase = async (message: Message, sessionId: string) => {
     if (!user) return null;
     try {
@@ -874,14 +893,30 @@ const formatRelativeTime = (date: Date) => {
     }
   };
   const handleNewChat = async () => {
-    setMessages([]);
-    setResponses([]);
-    setCurrentInput('');
-    setSelectedModels(AI_MODELS.map(m => m.id));
-    setCurrentSessionId(null);
-    // Refresh recent sessions list
-    await loadRecentSessions(); // ← Keeps sidebar in sync
-  };
+  if (!user) return;
+
+  // 1. Create the session
+  const newSession = await createNewSession();
+
+  if (!newSession) {
+    console.error("Failed to create a new session");
+    return;
+  }
+
+  // 2. Set state AFTER session is created
+  setCurrentSessionId(newSession.id);
+  setMessages([]);
+  setResponses([]);
+  setCurrentInput('');
+  setSelectedModels(AI_MODELS.map(m => m.id));
+
+  // 3. WAIT a little for Supabase to update
+  await new Promise((res) => setTimeout(res, 150));
+
+  // 4. Refresh sidebar
+  await loadRecentSessions();
+};
+
   const handlePasswordChange = async () => {
     if (passwordChange.new !== passwordChange.confirm) {
       alert('New passwords do not match');
@@ -1319,10 +1354,11 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
               {/* Search */}
               <div className="mb-5">
                 <div className="relative">
-                  <input
+                 <input
   type="text"
   placeholder="Search"
-  onChange={(e) => console.log("Search:", e.target.value)}
+  value={searchQuery}
+  onChange={(e) => setSearchQuery(e.target.value)}
   className={cn(
     "w-full py-3 pl-11 pr-4 rounded-full text-sm border transition-colors focus:border-cyan-500 focus:outline-none",
     darkMode
@@ -1330,6 +1366,7 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
       : "bg-white border-gray-300 text-gray-900 placeholder-gray-400"
   )}
 />
+
 
                   <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -1403,7 +1440,7 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
   ) : (
     /* Actual Chat List */
     <div className="space-y-1 px-2">
-      {recentSessions.map((session) => (
+      {filteredSessions.map((session) => (
         <div
           key={session.id}
           className="group relative rounded-lg hover:bg-gray-800/60 transition-all duration-200"
