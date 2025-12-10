@@ -2296,89 +2296,132 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
       {/* FINAL VERSION – EXACTLY LIKE YOUR SCREENSHOT (no badge, smaller everything) */}
       {/* FINAL – BLACK PANEL, ONE-LINE TITLE, X ICON, LIGHT-BLUE BUTTON */}
       {(showFirstTimePreferences || showModelPreferences) && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-2xl z-[9999] flex items-center justify-center p-4">
-          <div className="relative w-full max-w-lg bg-black rounded-3xl shadow-2xl border border-gray-800 overflow-hidden">
+  <div
+    className="fixed inset-0 bg-transparent z-[9999] flex items-center justify-center p-4"
+    onClick={() => {
+      setShowModelPreferences(false);
+      setShowFirstTimePreferences(false);
+    }}
+  >
+    <div
+      className="relative w-full max-w-2xl max-h-[85vh] bg-black rounded-3xl shadow-2xl border border-gray-800 overflow-hidden pointer-events-auto"
+      onClick={(e) => e.stopPropagation()} // prevents closing when clicking inside
+    >
 
-            {/* Header */}
-            <div className="flex items-center justify-between px-8 py-6 border-b border-gray-800">
-              <h2 className="text-xl font-semibold text-white">
-                Customize your chat AI model preferences
-              </h2>
-              <button
-                onClick={() => {
-                  setShowModelPreferences(false);
-                  setShowFirstTimePreferences(false);
-                }}
-                className="p-2 hover:bg-gray-800 rounded-lg transition"
-              >
-                <X className="w-5 h-5 text-gray-400" />
-              </button>
-            </div>
+      {/* Header */}
+      <div className="flex items-center justify-between px-8 py-6 border-b border-gray-800">
+        <h2 className="text-xl font-semibold text-white">
+          Customize your chat AI model preferences
+        </h2>
+        <button
+          onClick={() => {
+            setShowModelPreferences(false);
+            setShowFirstTimePreferences(false);
+          }}
+          className="p-2 hover:bg-gray-800 rounded-lg transition"
+        >
+          <X className="w-5 h-5 text-gray-400" />
+        </button>
+      </div>
 
-            {/* SUCCESS MESSAGE – White box with green text */}
-            {showSuccessMessage && (
-              <div className="mx-5 mt-5 p-4 bg-white rounded-xl flex items-center gap-3 animate-in slide-in-from-top duration-300">
-                <Check className="w-6 h-6 text-green-500 flex-shrink-0" />
-                <p className="text-green-600 font-semibold">
-                  Updated model preferences successfully
-                </p>
-              </div>
-            )}
-
-            {/* Model List */}
-            <div className={cn("p-5 space-y-3 max-h-96 overflow-y-auto", showSuccessMessage && "mt-2")}>
-              {AI_MODELS.map((model) => {
-                const isFree = !model.locked;
-                const isSelected = prefSelected.includes(model.id);
-
-                return (
-                  <div
-                    key={model.id}
-                    className="flex items-center justify-between py-4 px-5 rounded-xl bg-gray-900/40 hover:bg-gray-900/70 transition"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10">
-                        {typeof model.icon === "function" ? model.icon(true) : model.icon}
-                      </div>
-                      <div>
-                        <p className="text-white font-medium text-base">{model.name}</p>
-                        <p className="text-gray-500 text-xs mt-0.5">{model.provider}</p>
-                      </div>
-                    </div>
-
-                    {isFree ? (
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => togglePrefModel(model.id)}
-                          className="sr-only peer"
-                        />
-                        <div className="w-9 h-5 bg-gray-700 rounded-full peer peer-checked:after:translate-x-4 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-500"></div>
-                      </label>
-                    ) : (
-                      <div className="w-9 h-5 bg-gray-800 rounded-full flex items-center justify-center">
-                        <Lock className="w-4 h-4 text-gray-600" />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Button */}
-            <div className="p-5 border-t border-gray-800">
-              <button
-                onClick={savePreferences}
-                disabled={prefSaving || prefSelected.length === 0}
-                className="w-full py-4 bg-cyan-500 hover:bg-cyan-400 disabled:bg-gray-700 disabled:text-gray-500 text-white font-semibold text-base rounded-xl transition-all shadow-lg"
-              >
-                {prefSaving ? "Saving..." : "Update preferences"}
-              </button>
-            </div>
-          </div>
+      {/* SUCCESS MESSAGE */}
+      {showSuccessMessage && (
+        <div className="mx-5 mt-5 p-4 bg-white rounded-xl flex items-center gap-3 animate-in slide-in-from-top duration-300">
+          <Check className="w-6 h-6 text-green-500 flex-shrink-0" />
+          <p className="text-green-600 font-semibold">
+            Updated model preferences successfully
+          </p>
         </div>
       )}
+
+      {/* Model List */}
+      <div
+  className={cn(
+    "p-5 space-y-3 overflow-y-auto max-h-[70vh] custom-scroll",
+    showSuccessMessage && "mt-2"
+  )}
+>
+  <style>{`
+    .custom-scroll::-webkit-scrollbar {
+      width: 8px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #555;
+      border-radius: 8px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: #666;
+    }
+
+    .dark .custom-scroll::-webkit-scrollbar-thumb {
+      background: #444;
+    }
+    .dark .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+  `}</style>
+        {AI_MODELS.map((model) => {
+          const isFree = !model.locked;
+          const isSelected = prefSelected.includes(model.id);
+
+          return (
+            <div
+              key={model.id}
+              className="flex items-center justify-between py-4 px-5 rounded-xl bg-gray-900/40 hover:bg-gray-900/70 transition"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10">
+                  {typeof model.icon === "function"
+                    ? model.icon(true)
+                    : model.icon}
+                </div>
+                <div>
+                  <p className="text-white font-medium text-base">
+                    {model.name}
+                  </p>
+                  <p className="text-gray-500 text-xs mt-0.5">
+                    {model.provider}
+                  </p>
+                </div>
+              </div>
+
+              {isFree ? (
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => togglePrefModel(model.id)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-9 h-5 bg-gray-700 rounded-full peer peer-checked:after:translate-x-4 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-500"></div>
+                </label>
+              ) : (
+                <div className="w-9 h-5 bg-gray-800 rounded-full flex items-center justify-center">
+                  <Lock className="w-4 h-4 text-gray-600" />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Button */}
+      <div className="p-5 border-t border-gray-800">
+        <button
+          onClick={savePreferences}
+          disabled={prefSaving || prefSelected.length === 0}
+          className="w-full py-4 bg-cyan-500 hover:bg-cyan-400 disabled:bg-gray-700 disabled:text-gray-500 text-white font-semibold text-base rounded-xl transition-all shadow-lg"
+        >
+          {prefSaving ? "Saving..." : "Update preferences"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
       {/* CREATE NEW PROJECT MODAL – EXACTLY LIKE YOUR DESIGN */}
       {showProjectModal && (
         <>
