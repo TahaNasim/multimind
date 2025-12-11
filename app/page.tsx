@@ -539,6 +539,42 @@ useEffect(() => {
     setRecentSessions([]);
   }
 }, [user]);
+// Auto-load recent chats when user logs in
+useEffect(() => {
+  if (user) {
+    loadRecentSessions();
+  } else {
+    setRecentSessions([]);
+  }
+}, [user]);
+
+// ──────────────────────────────────────────────────────────────
+// CRITICAL: Keep Supabase session alive → fixes {} error forever
+// ──────────────────────────────────────────────────────────────
+useEffect(() => {
+  // Listen to auth changes
+  const { data: listener } = supabase.auth.onAuthStateChange(
+    async (event, session) => {
+      if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+        console.log('Session refreshed');
+      }
+    }
+  );
+
+  // Refresh session every 10 minutes (prevents silent failures)
+  const interval = setInterval(async () => {
+    const { data } = await supabase.auth.getSession();
+    if (data.session) {
+      await supabase.auth.setSession(data.session);
+    }
+  }, 10 * 60 * 1000); // 10 minutes
+
+  // Cleanup
+  return () => {
+    listener.subscription.unsubscribe();
+    clearInterval(interval);
+  };
+}, []); // ← runs once on mount
 // THIS MAKES LIGHT MODE ACTUALLY WORK (add this once)
 useEffect(() => {
   if (darkMode) {
@@ -858,25 +894,43 @@ const createNewSession = async () => {
 };
 
   const saveMessageToDatabase = async (message: Message, sessionId: string) => {
-    if (!user) return null;
-    try {
-      const { data, error } = await supabase
-        .from('chat_messages')
-        .insert({
-          session_id: sessionId,
-          user_id: user.id,
-          content: message.content,
-          role: message.role
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      return data.id;
-    } catch (error) {
-      console.error('Error saving message:', error);
-      return null;
+  if (!user) return null;
+
+  // CRITICAL: Refresh the session token before any write
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    console.error("No active session - cannot save message");
+    return null;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .insert({
+        session_id: sessionId,
+        user_id: user.id,
+        content: message.content,
+        role: message.role,
+        timestamp: new Date().toISOString(), // add explicit timestamp
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase insert error:', error);
+      throw error;
     }
-  };
+    return data.id;
+  } catch (error: any) {
+    console.error('Error saving message:', {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+    });
+    return null;
+  }
+};
   const saveModelResponseToDatabase = async (messageId: string, modelId: string, content: string, isBest: boolean = false) => {
     try {
       const { error } = await supabase
@@ -1310,10 +1364,10 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
       )}
       {/* Sidebar */}
       {/* ==================== ULTIMATE FINAL SIDEBAR – PERFECT COLLAPSED & EXPANDED ==================== */}
-      <div
+<div
   className={cn(
     "fixed left-0 top-0 h-full backdrop-blur-xl transition-all duration-300 z-40 border-r",
-    darkMode
+          darkMode
       ? "bg-black border-gray-900 text-white"
       : "bg-white border-gray-200 text-gray-900",
     sidebarCollapsed ? "w-16" : "w-72",
@@ -1410,8 +1464,9 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
               {/* Recent Chats */}
   {/* Recent Chats – WITH HEADING + DELETE BUTTON (INSTANTLY WORKING) */}
 {/* RECENT CHATS – FINAL WORKING VERSION (WITH HEADING + DELETE + INSTANT SHOW) */}
-<div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 pr-2 mt-6">
-  {/* Heading – Only show when sidebar is expanded */}
+<div className="flex-1 overflow-y-auto space-y-1 scrollbar-thin">
+
+{/* Heading – Only show when sidebar is expanded */}
   {!sidebarCollapsed && (
     <h3 className="px-6 mb-3 text-xs font-bold text-gray-500 uppercase tracking-wider">
       Recent Chats
@@ -1829,26 +1884,35 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
 
     {/* USER & OLD MESSAGES */}
     {messages
-      .filter((m) => m.modelId === modelId || m.role === "user")
-      .map((msg, i) => (
-        <div key={i} className="flex items-start gap-3.5">
-          <div className="flex-shrink-0">
-            {msg.role === "user" ? (
-              <div className="w-9 h-9 bg-cyan-500/20 rounded-full flex items-center justify-center ring-2 ring-cyan-500/30">
-                <User className="w-5 h-5 text-cyan-300" />
-              </div>
-            ) : (
-              <div className="w-9 h-9">
-                {typeof model.icon === "function" ? model.icon(true) : model.icon}
-              </div>
-            )}
-          </div>
-          <p className={msg.role === "user" ? "text-white font-medium" : "text-gray-200 font-light"}>
-            {msg.content}
-          </p>
-        </div>
-      ))}
+  .filter((m) => {
+    // 1. Only show messages in columns that are SELECTED
+    if (!selectedModels.includes(modelId)) return false;
 
+    // 2. If model is locked AND user is NOT premium → hide everything
+    if (model.locked && !isPremiumUser) return false;
+
+    // 3. Show user messages and responses for this model
+    return m.role === "user" || m.modelId === modelId;
+  })
+  .map((msg, i) => (
+    // ← your existing message JSX (unchanged)
+    <div key={i} className="flex items-start gap-3.5">
+      <div className="flex-shrink-0">
+        {msg.role === "user" ? (
+          <div className="w-9 h-9 bg-cyan-500/20 rounded-full flex items-center justify-center ring-2 ring-cyan-500/30">
+            <User className="w-5 h-5 text-cyan-300" />
+          </div>
+        ) : (
+          <div className="w-9 h-9">
+            {typeof model.icon === "function" ? model.icon(true) : model.icon}
+          </div>
+        )}
+      </div>
+      <p className={msg.role === "user" ? "text-white font-medium" : "text-gray-200 font-light"}>
+        {msg.content}
+      </p>
+    </div>
+  ))}
     {/* CURRENT RESPONSE — THINKING / ERROR / ANSWER */}
     {(() => {
       // Find response by exact ID or partial match (fixes Mistral/Google issue)
@@ -2337,7 +2401,7 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
       {/* Model List */}
       <div
   className={cn(
-    "p-5 space-y-3 overflow-y-auto max-h-[70vh] custom-scroll",
+    "p-5 space-y-3 overflow-y-auto max-h-[55vh] custom-scroll",
     showSuccessMessage && "mt-2"
   )}
 >
@@ -2530,6 +2594,30 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
   html.light input::placeholder,
   html.light textarea::placeholder {
     color: #555 !important;
+  }
+`}</style>
+<style jsx global>{`
+  /* PREMIUM SIDEBAR SCROLLBAR */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 3px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(34, 211, 238, 0.3);   /* cyan-400 with low opacity */
+    border-radius: 3px;
+    transition: all 0.2s ease;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(34, 211, 238, 0.6);   /* brighter on hover */
+  }
+
+  /* Firefox support */
+  .scrollbar-thin {
+    scrollbar-color: rgba(34, 211, 238, 0.3) transparent;
+    scrollbar-width: thin;
   }
 `}</style>
     </div>
