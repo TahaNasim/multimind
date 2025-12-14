@@ -1392,13 +1392,21 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
 
             {/* Theme Toggle – only in expanded mode */}
             {!sidebarCollapsed && (
-              <button
-                onClick={toggleDarkMode}
-                className="p-2.5 rounded-lg hover:bg-gray-900 transition-all"
-                title={darkMode ? "Light mode" : "Dark mode"}
-              >
-                {darkMode ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-gray-400" />}
-              </button>
+             <button
+  onClick={toggleDarkMode}
+  className={cn(
+    "p-2.5 rounded-lg flex items-center justify-center transition-all",
+    darkMode ? "hover:bg-gray-900" : "hover:bg-gray-200"
+  )}
+  title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+>
+  {darkMode ? (
+    <Moon className="w-5 h-5 text-gray-300" />
+  ) : (
+    <Sun className="w-5 h-5 text-yellow-500" />
+  )}
+</button>
+
             )}
           </div>
 
@@ -1617,65 +1625,148 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
           {/* Compact Modal */}
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
             <div
-              className="relative w-full max-w-md bg-black border border-gray-800 rounded-3xl shadow-2xl overflow-hidden pointer-events-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
+  className={cn(
+    "relative w-full max-w-md rounded-3xl shadow-2xl border overflow-hidden pointer-events-auto transition-colors",
+    darkMode
+      ? "bg-black border-gray-800 text-white"
+      : "bg-white border-gray-200 text-gray-900"
+  )}
+  onClick={(e) => e.stopPropagation()}
+>
+
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-gray-800">
-                <div>
-                  <h2 className="text-xl font-bold text-white">Profile Settings</h2>
-                  <p className="text-sm text-gray-400 mt-1">Manage your account</p>
-                </div>
-                <button
-                  onClick={() => setShowUserDropdown(false)}
-                  className="p-2 rounded-xl hover:bg-gray-900 transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-400" />
-                </button>
-              </div>
+              <div
+  className={cn(
+    "flex items-center justify-between p-6 border-b",
+    darkMode ? "border-gray-800" : "border-gray-200"
+  )}
+>
+  <div>
+    <h2
+      className={cn(
+        "text-xl font-bold",
+        darkMode ? "text-white" : "text-gray-900"
+      )}
+    >
+      Profile Settings
+    </h2>
+    <p
+      className={cn(
+        "text-sm mt-1",
+        darkMode ? "text-gray-400" : "text-gray-500"
+      )}
+    >
+      Manage your account
+    </p>
+  </div>
+
+  <button
+    onClick={() => setShowUserDropdown(false)}
+    className={cn(
+      "p-2 rounded-xl transition-colors",
+      darkMode ? "hover:bg-gray-900" : "hover:bg-gray-100"
+    )}
+  >
+    <X
+      className={cn(
+        "w-5 h-5",
+        darkMode ? "text-gray-400" : "text-gray-500"
+      )}
+    />
+  </button>
+</div>
 
               <div className="p-6 space-y-6">
                 {/* Email */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-1.5">Email</label>
+                 <label
+  className={cn(
+    "block text-xs font-medium mb-1.5",
+    darkMode ? "text-gray-400" : "text-gray-600"
+  )}
+>
+  Email
+</label>
+
                   <input
-                    type="email"
-                    value={user?.email || ""}
-                    readOnly
-                    className="w-full px-4 py-3 bg-gray-900/60 border border-gray-800 rounded-xl text-gray-300 text-sm"
-                  />
+  type="email"
+  value={user?.email || ""}
+  readOnly
+  className={cn(
+    "w-full px-4 py-3 rounded-xl border text-sm",
+    darkMode
+      ? "bg-gray-900/60 border-gray-800 text-gray-300"
+      : "bg-gray-100 border-gray-300 text-gray-700"
+  )}
+/>
                 </div>
 
                 {/* Full Name */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-1.5">Full Name</label>
-                  <input
-                    type="text"
-                    defaultValue={user?.user_metadata?.full_name || ""}
-                    placeholder="Your name"
-                    className="w-full px-4 py-3 bg-gray-900/80 border border-cyan-500/30 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
-                  />
+                 <label
+  className={cn(
+    "block text-xs font-medium mb-1.5",
+    darkMode ? "text-gray-400" : "text-gray-600"
+  )}
+>
+  Full Name
+</label>
+
+<input
+  type="text"
+  defaultValue={user?.user_metadata?.full_name || ""}
+  placeholder="Your name"
+  className={cn(
+    "w-full px-4 py-3 rounded-xl border text-sm transition-all focus:outline-none",
+    darkMode
+      ? "bg-gray-900/80 border-cyan-500/30 text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+      : "bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+  )}
+/>
+
                 </div>
 
                 {/* Phone */}
                 <div>
                   <label className="block text-xs font-medium text-gray-400 mb-1.5">Phone</label>
                   <div className="flex">
-                    <span className="inline-flex items-center px-4 py-3 bg-gray-900/80 border border-cyan-500/30 border-r-0 rounded-l-xl text-gray-400 text-sm">
-                      India +91
-                    </span>
-                    <input
-                      type="tel"
-                      placeholder="98765 43210"
-                      className="flex-1 px-4 py-3 bg-gray-900/80 border border-cyan-500/30 rounded-r-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
-                    />
+                    <span
+  className={cn(
+    "inline-flex items-center px-4 py-3 border border-r-0 rounded-l-xl text-sm",
+    darkMode
+      ? "bg-gray-900/80 border-cyan-500/30 text-gray-400"
+      : "bg-gray-100 border-gray-300 text-gray-600"
+  )}
+>
+  India +91
+</span>
+
+<input
+  type="tel"
+  placeholder="98765 43210"
+  className={cn(
+    "flex-1 px-4 py-3 rounded-r-xl border text-sm transition-all focus:outline-none",
+    darkMode
+      ? "bg-gray-900/80 border-cyan-500/30 text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+      : "bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+  )}
+/>
+
                   </div>
                 </div>
 
                 {/* Language — NOW 12 LANGUAGES */}
                 <div>
                   <label className="block text-xs font-medium text-gray-400 mb-1.5">Language</label>
-                  <select className="w-full px-4 py-3 bg-gray-900/80 border border-cyan-500/30 rounded-xl text-white text-sm focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all">
+                  <select
+  className={cn(
+    "w-full px-4 py-3 rounded-xl border text-sm transition-all focus:outline-none",
+    darkMode
+      ? "bg-gray-900/80 border-cyan-500/30 text-white"
+      : "bg-white border-gray-300 text-gray-900"
+  )}
+>
+
                     <option>English</option>
                     <option>हिन्दी (Hindi)</option>
                     <option>தமிழ் (Tamil)</option>
@@ -1692,24 +1783,38 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
                 </div>
 
                 {/* Update Button */}
-                <button className="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-xl hover:from-cyan-400 hover:to-blue-500 transition-all shadow-lg text-sm">
-                  Update Profile
-                </button>
+               <button
+  className={cn(
+    "w-full py-3.5 font-bold rounded-xl transition-all shadow-lg text-sm",
+    darkMode
+      ? "bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white"
+      : "bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white"
+  )}
+>
+  Update Profile
+</button>
+
 
                 {/* Logout */}
-                <div className="pt-4 border-t border-gray-800">
-                  <button
-                    onClick={async () => {
-                      setShowUserDropdown(false);
-                      await supabase.auth.signOut();
-                      window.location.href = "/auth";
-                    }}
-                    className="w-full py-3 flex items-center justify-center gap-2.5 text-red-400 font-medium rounded-xl hover:bg-red-900/20 transition-all text-sm"
-                  >
-                    <LogOut className="w-4.5 h-4.5" />
-                    Log Out
-                  </button>
-                </div>
+               <div
+  className={cn(
+    "pt-4 border-t",
+    darkMode ? "border-gray-800" : "border-gray-200"
+  )}
+>
+  <button
+    className={cn(
+      "w-full py-3 flex items-center justify-center gap-2.5 font-medium rounded-xl transition-all text-sm",
+      darkMode
+        ? "text-red-400 hover:bg-red-900/20"
+        : "text-red-600 hover:bg-red-100"
+    )}
+  >
+    <LogOut className="w-4.5 h-4.5" />
+    Log Out
+  </button>
+</div>
+
               </div>
             </div>
           </div>
@@ -1721,21 +1826,41 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         isMobile ? "ml-0 p-0" : sidebarCollapsed ? "ml-16 p-6" : "ml-64 p-6"
       )}>
         {selectedModels.length === 0 ? (
-          /* Welcome Screen */
-          <div className="text-center py-20">
-            <div className="w-24 h-24 bg-gradient-to-r from-violet-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl">
-              <SparklesIcon className="w-12 h-12 text-white" />
-            </div>
-            <h2 className="text-4xl font-bold text-white mb-4">Welcome to MultiMind</h2>
-            <p className="text-slate-400 text-lg mb-8">Click &quot;All&quot; above to start comparing all AI models</p>
-            <button
-              onClick={() => setSelectedModels(AI_MODELS.map(m => m.id))}
-              className="px-8 py-3 bg-gradient-to-r from-violet-600 to-purple-700 text-white rounded-xl hover:from-violet-700 hover:to-purple-800 transition-all duration-200 shadow-lg hover:shadow-xl"
-            >
-              Start with All Models
-            </button>
-          </div>
-        ) : (
+  /* Enhanced Welcome Screen – Matches modern multi-model comparison apps */
+  <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] px-6">
+    <div className="relative">
+      <div className="absolute inset-0 bg-gradient-to-r from-violet-600 to-purple-600 rounded-full blur-3xl opacity-50 animate-pulse" />
+      <div className="relative w-32 h-32 bg-gradient-to-br from-violet-500 to-purple-700 rounded-full flex items-center justify-center shadow-2xl ring-8 ring-violet-500/30">
+        <SparklesIcon className="w-20 h-20 text-white" />
+      </div>
+    </div>
+
+    <h1 className="text-5xl md:text-6xl font-black text-white mt-12 mb-6 text-center leading-tight">
+      Welcome to MultiMind
+    </h1>
+
+    <p className="text-xl text-gray-300 max-w-2xl text-center mb-12 leading-relaxed">
+      Compare responses from all the top AI models side-by-side.<br />
+      Ask once, get answers from GPT-5, Claude, Gemini, Grok, and more.
+    </p>
+
+    <button
+      onClick={() => setSelectedModels(AI_MODELS.map(m => m.id))}
+      className="group relative px-12 py-5 bg-gradient-to-r from-violet-600 to-purple-700 text-white text-xl font-bold rounded-2xl shadow-2xl hover:from-violet-700 hover:to-purple-800 hover:scale-105 transition-all duration-300 flex items-center gap-4"
+    >
+      <SparklesIcon className="w-8 h-8 group-hover:animate-pulse" />
+      Start with All Models
+      <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
+      
+      {/* Glowing effect */}
+      <div className="absolute -inset-1 bg-gradient-to-r from-violet-600 to-purple-600 rounded-2xl blur-xl opacity-60 group-hover:opacity-90 transition-opacity" />
+    </button>
+
+    <p className="text-sm text-gray-500 mt-10">
+      Free models load instantly • Premium models require upgrade
+    </p>
+  </div>
+) : (
           /* Chat Interface */
           
           
@@ -1863,20 +1988,31 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
           </div>
 
           {/* UPGRADE PILL – ONLY FOR LOCKED MODELS */}
-          {isSelected && model.locked && (
-            <div className="px-4 py-4 bg-black/95 border-b border-gray-900">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowPremiumModal(true);
-                }}
-                className="w-full py-3.5 bg-white/10 hover:bg-white/15 backdrop-blur-xl border border-white/20 rounded-2xl text-white font-medium text-sm transition-all hover:scale-105 active:scale-95 shadow-lg"
-              >
-                Upgrade to unlock
-              </button>
-            </div>
-          )}
-
+          {/* UPGRADE TO UNLOCK – Same look, just visible in light mode */}
+{isSelected && model.locked && (
+  <div className={cn(
+    "px-4 py-4 border-b",
+    darkMode 
+      ? "bg-black/95 border-gray-900" 
+      : "bg-white border-gray-200"
+  )}>
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        setShowPremiumModal(true);
+      }}
+      className={cn(
+        "w-full py-3.5 font-medium text-sm rounded-2xl transition-all hover:scale-105 active:scale-95 shadow-lg",
+        "bg-white/10 hover:bg-white/15 backdrop-blur-xl border border-white/20",
+        darkMode 
+          ? "text-white" 
+          : "text-gray-800"  // Slightly darker text in light mode for readability
+      )}
+    >
+      Upgrade to unlock
+    </button>
+  </div>
+)}
           {/* MESSAGES */}
 {/* MESSAGES + RESPONSE + THINKING + ERROR — FINAL BULLETPROOF VERSION */}
 {isSelected && (
@@ -2209,40 +2345,92 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
       </div>
       {/* Web Search Modal – Add this entire block */}
 {showWebSearch && (
-  <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-    <div className="relative w-full max-w-2xl bg-black rounded-2xl border border-gray-800 shadow-2xl max-h-[80vh] overflow-hidden">
+ <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+  <div
+    className={cn(
+      "relative w-full max-w-2xl rounded-2xl border shadow-2xl max-h-[80vh] overflow-hidden transition-colors",
+      darkMode
+        ? "bg-black border-gray-800 text-white"
+        : "bg-white border-gray-200 text-gray-900"
+    )}
+  >
+
       {/* Header */}
-      <div className="flex items-center justify-between p-6 border-b border-gray-800">
-        <div className="flex items-center gap-2">
-  <Globe className="w-5 h-5" />
-  <h2 className="text-lg font-semibold">Web Search</h2>
-</div>
+      <div
+  className={cn(
+    "flex items-center justify-between p-6 border-b",
+    darkMode ? "border-gray-800" : "border-gray-200"
+  )}
+>
+  <div className="flex items-center gap-2">
+    <Globe
+      className={cn(
+        "w-5 h-5",
+        darkMode ? "text-gray-400" : "text-gray-600"
+      )}
+    />
+    <h2
+      className={cn(
+        "text-lg font-semibold",
+        darkMode ? "text-white" : "text-gray-900"
+      )}
+    >
+      Web Search
+    </h2>
+  </div>
+
         <button
-          onClick={() => {
-            setShowWebSearch(false);
-            setWebQuery('');
-            setWebResults(null);
-          }}
-          className="p-2 hover:bg-gray-800 rounded-lg transition"
-        >
-          <X className="w-5 h-5 text-gray-400" />
-        </button>
+  onClick={() => {
+    setShowWebSearch(false);
+    setWebQuery('');
+    setWebResults(null);
+  }}
+  className={cn(
+    "p-2 rounded-lg transition",
+    darkMode ? "hover:bg-gray-800" : "hover:bg-gray-100"
+  )}
+>
+  <X
+    className={cn(
+      "w-5 h-5",
+      darkMode ? "text-gray-400" : "text-gray-500"
+    )}
+  />
+</button>
+
       </div>
 
       {/* Search Form */}
-      <form onSubmit={handleWebSearch} className="p-6 border-b border-gray-800">
+      <form
+  onSubmit={handleWebSearch}
+  className={cn(
+    "p-6 border-b",
+    darkMode ? "border-gray-800" : "border-gray-200"
+  )}
+>
+
         <div className="relative">
           <input
             type="text"
             value={webQuery}
             onChange={(e) => setWebQuery(e.target.value)}
             placeholder="Ask Google anything..."
-            className="w-full px-4 py-3 bg-gray-900/70 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+           className={cn(
+  "w-full px-4 py-3 rounded-xl border transition-all focus:outline-none",
+  darkMode
+    ? "bg-gray-900/70 border-gray-700 text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+    : "bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+)}
+
           />
           <button
             type="submit"
             disabled={!webQuery.trim()}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-cyan-400 disabled:opacity-50"
+           className={cn(
+  "absolute right-3 top-1/2 -translate-y-1/2 p-2 disabled:opacity-50",
+  darkMode ? "text-cyan-400" : "text-cyan-600"
+)}
+
           >
             <Search className="w-5 h-5" /> {/* Add import: import { Search } from 'lucide-react'; */}
           </button>
@@ -2251,10 +2439,40 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
 
       {/* Results */}
       {webResults && (
-        <div className="p-6 max-h-96 overflow-y-auto space-y-4">
-          <div className="bg-gray-900/50 rounded-xl p-4">
-            <h4 className="font-semibold text-white mb-2">Answer:</h4>
-            <p className="text-gray-300 whitespace-pre-wrap">{webResults}</p>
+        <div
+  className={cn(
+    "p-6 max-h-96 overflow-y-auto space-y-4",
+    darkMode ? "bg-black" : "bg-white"
+  )}
+>
+
+         <div
+  className={cn(
+    "rounded-xl p-4 border",
+    darkMode
+      ? "bg-gray-900/50 border-gray-800"
+      : "bg-gray-50 border-gray-200"
+  )}
+>
+
+            <h4
+  className={cn(
+    "font-semibold mb-2",
+    darkMode ? "text-white" : "text-gray-900"
+  )}
+>
+  Answer:
+</h4>
+
+<p
+  className={cn(
+    "whitespace-pre-wrap",
+    darkMode ? "text-gray-300" : "text-gray-700"
+  )}
+>
+  {webResults}
+</p>
+
           </div>
           {/* Optional: Add links if you want full results */}
           {/* {data.items?.map((item: any, i: number) => ( ... ))} */}
@@ -2262,7 +2480,15 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
       )}
 
       {isLoading && ( // Add a loading state if needed
-        <div className="p-6 text-center text-gray-400">Searching Google...</div>
+<div
+  className={cn(
+    "p-6 text-center text-sm",
+    darkMode ? "text-gray-400" : "text-gray-500"
+  )}
+>
+  Searching Google...
+</div>
+
       )}
     </div>
   </div>
@@ -2368,33 +2594,72 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     }}
   >
     <div
-      className="relative w-full max-w-2xl max-h-[85vh] bg-black rounded-3xl shadow-2xl border border-gray-800 overflow-hidden pointer-events-auto"
-      onClick={(e) => e.stopPropagation()} // prevents closing when clicking inside
-    >
+  className={cn(
+    "relative w-full max-w-2xl max-h-[85vh] rounded-3xl shadow-2xl border overflow-hidden pointer-events-auto transition-colors",
+    darkMode
+      ? "bg-black border-gray-800 text-white"
+      : "bg-white border-gray-200 text-gray-900"
+  )}
+  onClick={(e) => e.stopPropagation()}
+>
 
       {/* Header */}
-      <div className="flex items-center justify-between px-8 py-6 border-b border-gray-800">
-        <h2 className="text-xl font-semibold text-white">
+      <div
+  className={cn(
+    "flex items-center justify-between px-8 py-6 border-b",
+    darkMode ? "border-gray-800" : "border-gray-200"
+  )}
+>
+  <h2
+    className={cn(
+      "text-xl font-semibold",
+      darkMode ? "text-white" : "text-gray-900"
+    )}
+  >
+
           Customize your chat AI model preferences
         </h2>
         <button
-          onClick={() => {
-            setShowModelPreferences(false);
-            setShowFirstTimePreferences(false);
-          }}
-          className="p-2 hover:bg-gray-800 rounded-lg transition"
-        >
-          <X className="w-5 h-5 text-gray-400" />
-        </button>
+  onClick={() => {
+    setShowModelPreferences(false);
+    setShowFirstTimePreferences(false);
+  }}
+  className={cn(
+    "p-2 rounded-lg transition",
+    darkMode ? "hover:bg-gray-800" : "hover:bg-gray-100"
+  )}
+>
+  <X
+    className={cn(
+      "w-5 h-5",
+      darkMode ? "text-gray-400" : "text-gray-500"
+    )}
+  />
+</button>
+
       </div>
 
       {/* SUCCESS MESSAGE */}
       {showSuccessMessage && (
-        <div className="mx-5 mt-5 p-4 bg-white rounded-xl flex items-center gap-3 animate-in slide-in-from-top duration-300">
+        <div
+  className={cn(
+    "mx-5 mt-5 p-4 rounded-xl flex items-center gap-3 animate-in slide-in-from-top duration-300",
+    darkMode
+      ? "bg-gray-900 border border-gray-800"
+      : "bg-green-50 border border-green-200"
+  )}
+>
+
           <Check className="w-6 h-6 text-green-500 flex-shrink-0" />
-          <p className="text-green-600 font-semibold">
-            Updated model preferences successfully
-          </p>
+          <p
+  className={cn(
+    "font-semibold",
+    darkMode ? "text-green-400" : "text-green-700"
+  )}
+>
+  Updated model preferences successfully
+</p>
+
         </div>
       )}
 
@@ -2494,72 +2759,135 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
             onClick={() => setShowProjectModal(false)}
           />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div
-              className="relative w-full max-w-2xl bg-[#0f0f0f] rounded-2xl shadow-2xl border border-gray-800"
-              onClick={(e) => e.stopPropagation()}
-            >
+           <div
+  className={cn(
+    "relative w-full max-w-2xl rounded-2xl shadow-2xl border transition-colors",
+    darkMode
+      ? "bg-[#0f0f0f] border-gray-800 text-white"
+      : "bg-white border-gray-200 text-gray-900"
+  )}
+  onClick={(e) => e.stopPropagation()}
+>
+
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-gray-800">
-                <div>
-                  <h2 className="text-2xl font-bold text-white">Create new project</h2>
-                  <p className="text-gray-400 text-sm mt-1">Fill in the details below to create a new project.</p>
-                </div>
-                <button
-                  onClick={() => setShowProjectModal(false)}
-                  className="p-2 hover:bg-gray-800 rounded-lg transition"
-                >
-                  <X className="w-6 h-6 text-gray-400" />
-                </button>
-              </div>
+              <div
+  className={cn(
+    "flex items-center justify-between p-6 border-b",
+    darkMode ? "border-gray-800" : "border-gray-200"
+  )}
+>
+  <div>
+    <h2
+      className={cn(
+        "text-2xl font-bold",
+        darkMode ? "text-white" : "text-gray-900"
+      )}
+    >
+      Create new project
+    </h2>
+    <p
+      className={cn(
+        "text-sm mt-1",
+        darkMode ? "text-gray-400" : "text-gray-500"
+      )}
+    >
+      Fill in the details below to create a new project.
+    </p>
+  </div>
+
+  <button
+    onClick={() => setShowProjectModal(false)}
+    className={cn(
+      "p-2 rounded-lg transition",
+      darkMode ? "hover:bg-gray-800" : "hover:bg-gray-100"
+    )}
+  >
+    <X
+      className={cn(
+        "w-6 h-6",
+        darkMode ? "text-gray-400" : "text-gray-500"
+      )}
+    />
+  </button>
+</div>
 
               <div className="p-6 space-y-6">
                 {/* Project Name */}
                 <div>
-                  <label className="block text-lg font-medium text-white mb-3">Project name</label>
+                 <label
+  className={cn(
+    "block text-lg font-medium mb-3",
+    darkMode ? "text-white" : "text-gray-900"
+  )}
+>
+  Project name
+</label>
+
                   <input
-                    type="text"
-                    value={projectName}
-                    onChange={(e) => setProjectName(e.target.value)}
-                    placeholder="Enter a name for your project (max 50 characters)"
-                    maxLength={50}
-                    className="w-full px-5 py-4 bg-gray-900/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
-                  />
+  type="text"
+  value={projectName}
+  onChange={(e) => setProjectName(e.target.value)}
+  placeholder="Enter a name for your project (max 50 characters)"
+  maxLength={50}
+  className={cn(
+    "w-full px-5 py-4 rounded-xl border transition-all focus:outline-none",
+    darkMode
+      ? "bg-gray-900/50 border-gray-700 text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+      : "bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+  )}
+/>
                 </div>
 
                 {/* System Prompt */}
                 <div>
-                  <label className="block text-lg font-medium text-white mb-3">System prompt</label>
+                  <label
+  className={cn(
+    "block text-lg font-medium mb-3",
+    darkMode ? "text-white" : "text-gray-900"
+  )}
+>
+  System prompt
+</label>
+
                   <textarea
-                    value={systemPrompt}
-                    onChange={(e) => setSystemPrompt(e.target.value)}
-                    placeholder="Enter a system prompt for chats in this project (max 5000 characters)"
-                    maxLength={5000}
-                    rows={8}
-                    className="w-full px-5 py-4 bg-gray-900/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all resize-none"
-                  />
-                  <p className="text-xs text-gray-500 mt-2">
-                    All chats in this project will use this as the system prompt sent to the AI model.
-                  </p>
+  value={systemPrompt}
+  onChange={(e) => setSystemPrompt(e.target.value)}
+  placeholder="Enter a system prompt for chats in this project (max 5000 characters)"
+  maxLength={5000}
+  rows={8}
+  className={cn(
+    "w-full px-5 py-4 rounded-xl border resize-none transition-all focus:outline-none",
+    darkMode
+      ? "bg-gray-900/50 border-gray-700 text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+      : "bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+  )}
+/>
+
+                  <p
+  className={cn(
+    "text-xs mt-2",
+    darkMode ? "text-gray-500" : "text-gray-500"
+  )}
+>
+  All chats in this project will use this as the system prompt sent to the AI model.
+</p>
+
                 </div>
 
                 {/* Create Button */}
                 <div className="flex justify-center pt-4">
-                  <button
-                    onClick={() => {
-                      if (!projectName.trim()) {
-                        alert("Please enter a project name");
-                        return;
-                      }
-                      alert(`Project "${projectName}" created successfully!`);
-                      setShowProjectModal(false);
-                      setProjectName('');
-                      setSystemPrompt('');
-                    }}
-                    disabled={!projectName.trim()}
-                    className="px-12 py-4 font-bold text-white rounded-xl transition-all duration-200 shadow-lg bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 active:scale-95 disabled:bg-gray-600 disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    Create project
-                  </button>
+                 <button
+  disabled={!projectName.trim()}
+  className={cn(
+    "px-12 py-4 font-bold rounded-xl transition-all duration-200 shadow-lg active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed",
+    darkMode
+      ? "text-white bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400"
+      : "text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500"
+  )}
+>
+  Create project
+</button>
+
                 </div>
               </div>
             </div>
