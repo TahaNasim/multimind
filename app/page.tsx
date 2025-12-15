@@ -1803,16 +1803,35 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
   )}
 >
   <button
-    className={cn(
-      "w-full py-3 flex items-center justify-center gap-2.5 font-medium rounded-xl transition-all text-sm",
-      darkMode
-        ? "text-red-400 hover:bg-red-900/20"
-        : "text-red-600 hover:bg-red-100"
-    )}
-  >
-    <LogOut className="w-4.5 h-4.5" />
-    Log Out
-  </button>
+  onClick={async () => {
+    try {
+      setShowUserDropdown(false);
+
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        console.error("Logout failed:", error.message);
+        alert("Logout failed. Please try again.");
+        return;
+      }
+
+      // Force full reload to clear session
+      window.location.replace("/auth");
+    } catch (err) {
+      console.error("Unexpected logout error:", err);
+    }
+  }}
+  className={cn(
+    "w-full py-3 flex items-center justify-center gap-2.5 font-medium rounded-xl transition-all text-sm",
+    darkMode
+      ? "text-red-400 hover:bg-red-900/20"
+      : "text-red-600 hover:bg-red-100"
+  )}
+>
+  <LogOut className="w-4.5 h-4.5" />
+  Log Out
+</button>
+
 </div>
 
               </div>
@@ -1827,39 +1846,69 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
       )}>
         {selectedModels.length === 0 ? (
   /* Enhanced Welcome Screen – Matches modern multi-model comparison apps */
-  <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] px-6">
-    <div className="relative">
-      <div className="absolute inset-0 bg-gradient-to-r from-violet-600 to-purple-600 rounded-full blur-3xl opacity-50 animate-pulse" />
-      <div className="relative w-32 h-32 bg-gradient-to-br from-violet-500 to-purple-700 rounded-full flex items-center justify-center shadow-2xl ring-8 ring-violet-500/30">
-        <SparklesIcon className="w-20 h-20 text-white" />
-      </div>
+ <div
+  className={cn(
+    "flex flex-col items-center justify-center min-h-[calc(100vh-200px)] px-6 transition-colors duration-300",
+    darkMode ? "bg-black" : "bg-white"
+  )}
+>
+  {/* Logo */}
+  <div className="relative">
+    {/* Glow */}
+    <div className="absolute inset-0 bg-gradient-to-r from-sky-400 to-cyan-400 rounded-full blur-3xl opacity-50 animate-pulse" />
+
+    {/* Logo circle */}
+    <div className="relative w-32 h-32 bg-gradient-to-br from-sky-400 to-cyan-600 rounded-full flex items-center justify-center shadow-2xl ring-8 ring-sky-400/30">
+      <SparklesIcon className="w-20 h-20 text-white" />
     </div>
-
-    <h1 className="text-5xl md:text-6xl font-black text-white mt-12 mb-6 text-center leading-tight">
-      Welcome to MultiMind
-    </h1>
-
-    <p className="text-xl text-gray-300 max-w-2xl text-center mb-12 leading-relaxed">
-      Compare responses from all the top AI models side-by-side.<br />
-      Ask once, get answers from GPT-5, Claude, Gemini, Grok, and more.
-    </p>
-
-    <button
-      onClick={() => setSelectedModels(AI_MODELS.map(m => m.id))}
-      className="group relative px-12 py-5 bg-gradient-to-r from-violet-600 to-purple-700 text-white text-xl font-bold rounded-2xl shadow-2xl hover:from-violet-700 hover:to-purple-800 hover:scale-105 transition-all duration-300 flex items-center gap-4"
-    >
-      <SparklesIcon className="w-8 h-8 group-hover:animate-pulse" />
-      Start with All Models
-      <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
-      
-      {/* Glowing effect */}
-      <div className="absolute -inset-1 bg-gradient-to-r from-violet-600 to-purple-600 rounded-2xl blur-xl opacity-60 group-hover:opacity-90 transition-opacity" />
-    </button>
-
-    <p className="text-sm text-gray-500 mt-10">
-      Free models load instantly • Premium models require upgrade
-    </p>
   </div>
+
+  {/* Title */}
+  <h1
+    className={cn(
+      "text-5xl md:text-6xl font-black mt-12 mb-6 text-center leading-tight",
+      darkMode ? "text-white" : "text-gray-900"
+    )}
+  >
+    Welcome to <span className="text-sky-400">MultiMind</span>
+  </h1>
+
+  {/* Description */}
+  <p
+    className={cn(
+      "text-xl max-w-2xl text-center mb-12 leading-relaxed",
+      darkMode ? "text-gray-300" : "text-gray-600"
+    )}
+  >
+    Compare responses from all the top AI models side-by-side.
+    <br />
+    Ask once, get answers from GPT-5, Claude, Gemini, Grok, and more.
+  </p>
+
+  {/* CTA Button */}
+  <button
+    onClick={() => setSelectedModels(AI_MODELS.map(m => m.id))}
+    className="group relative px-12 py-5 bg-gradient-to-r from-sky-500 to-cyan-600 text-white text-xl font-bold rounded-2xl shadow-2xl hover:from-sky-600 hover:to-cyan-700 hover:scale-105 transition-all duration-300 flex items-center gap-4"
+  >
+    <SparklesIcon className="w-8 h-8 group-hover:animate-pulse" />
+    Start with All Models
+    <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
+
+    {/* Glow */}
+    <div className="absolute -inset-1 bg-gradient-to-r from-sky-400 to-cyan-500 rounded-2xl blur-xl opacity-60 group-hover:opacity-90 transition-opacity" />
+  </button>
+
+  {/* Footer text */}
+  <p
+    className={cn(
+      "text-sm mt-10",
+      darkMode ? "text-gray-500" : "text-gray-500"
+    )}
+  >
+    Free models load instantly • Premium models require upgrade
+  </p>
+</div>
+
 ) : (
           /* Chat Interface */
           
@@ -2500,55 +2549,125 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
       {/* PREMIUM MODAL – VIOLET THEME */}
       {/* COMPACT UPGRADE MODAL – MATCHES YOUR UI PERFECTLY */}
 {showPremiumModal && (
-  <div 
-    className="fixed inset-0 bg-black/70 backdrop-blur-xl z-[9999] flex items-center justify-center p-4"
+  <div
+    className={cn(
+      "fixed inset-0 backdrop-blur-xl z-[9999] flex items-center justify-center p-4",
+      darkMode ? "bg-black/70" : "bg-black/40"
+    )}
     onClick={() => setShowPremiumModal(false)}
   >
-    <div 
-      className="relative w-full max-w-md bg-black/95 backdrop-blur-2xl rounded-3xl border border-cyan-500/30 shadow-2xl overflow-hidden"
+    <div
+      className={cn(
+        "relative w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border transition-colors",
+        darkMode
+          ? "bg-black/95 border-cyan-500/30 text-white"
+          : "bg-white border-gray-200 text-gray-900"
+      )}
       onClick={(e) => e.stopPropagation()}
     >
-      {/* Close Button - Top Right */}
+      {/* Close Button */}
       <button
         onClick={() => setShowPremiumModal(false)}
-        className="absolute top-4 right-4 z-10 p-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-all"
+        className={cn(
+          "absolute top-4 right-4 z-10 p-2.5 rounded-full transition-all",
+          darkMode
+            ? "bg-white/10 hover:bg-white/20"
+            : "bg-gray-100 hover:bg-gray-200"
+        )}
       >
-        <X className="w-5 h-5 text-gray-300" />
+        <X
+          className={cn(
+            "w-5 h-5",
+            darkMode ? "text-gray-300" : "text-gray-600"
+          )}
+        />
       </button>
 
       {/* Header */}
-      <div className="p-8 pt-12 text-center border-b border-gray-800">
+      <div
+        className={cn(
+          "p-8 pt-12 text-center border-b",
+          darkMode ? "border-gray-800" : "border-gray-200"
+        )}
+      >
         <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-xl">
           <Crown className="w-9 h-9 text-white" />
         </div>
-        <h3 className="text-2xl font-black text-white mb-2">Upgrade to Premium</h3>
-        <p className="text-gray-400 text-sm">Unlock all premium models instantly</p>
+
+        <h3 className="text-2xl font-black">Upgrade to Premium</h3>
+        <p className={darkMode ? "text-gray-400" : "text-gray-600"}>
+          Unlock all premium models instantly
+        </p>
       </div>
 
       {/* Plans */}
       <div className="p-6 space-y-4">
         {/* Monthly */}
-        <div className="bg-gray-900/50 rounded-2xl p-5 border border-gray-800 hover:border-cyan-500/50 transition-all">
-          <div className="flex justify-between items-center mb-3">
-            <div>
-              <p className="text-3xl font-black text-white">₹999<span className="text-lg text-gray-400">/month</span></p>
-            </div>
-            <button className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-white font-semibold text-sm transition-all">
+        <div
+          className={cn(
+            "rounded-2xl p-5 border transition-all",
+            darkMode
+              ? "bg-gray-900/50 border-gray-800 hover:border-cyan-500/50"
+              : "bg-gray-50 border-gray-200 hover:border-cyan-400"
+          )}
+        >
+          <div className="flex justify-between items-center">
+            <p className="text-3xl font-black">
+              ₹999
+              <span
+                className={cn(
+                  "text-lg ml-1",
+                  darkMode ? "text-gray-400" : "text-gray-500"
+                )}
+              >
+                /month
+              </span>
+            </p>
+
+            <button
+              className={cn(
+                "px-6 py-3 rounded-xl font-semibold text-sm transition-all",
+                darkMode
+                  ? "bg-white/10 hover:bg-white/20 text-white"
+                  : "bg-gray-200 hover:bg-gray-300 text-gray-900"
+              )}
+            >
               Monthly
             </button>
           </div>
         </div>
 
-        {/* Yearly - Highlighted */}
-        <div className="relative bg-gradient-to-r from-cyan-900/20 to-blue-900/20 rounded-2xl p-5 border-2 border-cyan-500/60 shadow-lg shadow-cyan-500/20">
+        {/* Yearly */}
+        <div
+          className={cn(
+            "relative rounded-2xl p-5 border-2 shadow-lg",
+            darkMode
+              ? "bg-gradient-to-r from-cyan-900/20 to-blue-900/20 border-cyan-500/60 shadow-cyan-500/20"
+              : "bg-cyan-50 border-cyan-400 shadow-cyan-400/20"
+          )}
+        >
           <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-cyan-500 text-black text-xs font-bold rounded-full">
             BEST VALUE
           </div>
-          <div className="flex justify-between items-center mb-3">
+
+          <div className="flex justify-between items-center">
             <div>
-              <p className="text-3xl font-black text-white">₹8,999<span className="text-lg text-gray-400">/year</span></p>
-              <p className="text-cyan-400 text-sm font-semibold">Save ₹2,989/year</p>
+              <p className="text-3xl font-black">
+                ₹8,999
+                <span
+                  className={cn(
+                    "text-lg ml-1",
+                    darkMode ? "text-gray-400" : "text-gray-500"
+                  )}
+                >
+                  /year
+                </span>
+              </p>
+              <p className="text-cyan-500 text-sm font-semibold">
+                Save ₹2,989/year
+              </p>
             </div>
+
             <button className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 rounded-xl text-white font-bold text-sm shadow-lg transition-all transform hover:scale-105">
               Get Yearly Plan
             </button>
@@ -2563,23 +2682,35 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
             "All premium models (GPT-5, Claude, Gemini Pro, Grok-2)",
             "Unlimited side-by-side comparison",
             "Image generation & voice input",
-            "Priority support + future updates free"
+            "Priority support + future updates free",
           ].map((feat, i) => (
             <li key={i} className="flex items-center gap-3">
               <Check className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-              <span className="text-gray-300">{feat}</span>
+              <span
+                className={darkMode ? "text-gray-300" : "text-gray-700"}
+              >
+                {feat}
+              </span>
             </li>
           ))}
         </ul>
       </div>
 
       {/* Footer */}
-      <div className="px-6 py-4 bg-gray-900/50 text-center text-xs text-gray-500 border-t border-gray-800">
+      <div
+        className={cn(
+          "px-6 py-4 text-center text-xs border-t",
+          darkMode
+            ? "bg-gray-900/50 text-gray-500 border-gray-800"
+            : "bg-gray-100 text-gray-600 border-gray-200"
+        )}
+      >
         Instant activation • Cancel anytime • Made in India
       </div>
     </div>
   </div>
 )}
+
       
             {/* REUSABLE MODEL PREFERENCES – First Time + Settings (Perfect Match) */}
       {/* NEW BEAUTIFUL MODEL PREFERENCES PANEL – LIKE YOUR SCREENSHOT */}
