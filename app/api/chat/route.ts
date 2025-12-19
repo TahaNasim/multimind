@@ -12,7 +12,7 @@ const MODEL_MAPPING: { [key: string]: string } = {
   'google'      : 'google/gemma-3n-e2b-it:free',
   'deepseek'    : 'z-ai/glm-4.5-air:free',
   'meta-llama'  : 'arcee-ai/trinity-mini:free',
-  'qwen'        : 'amazon/nova-2-lite-v1:free',
+  'qwen'        : 'qwen/qwen3-4b:free',
   'mistralai'   : 'openai/gpt-oss-20b:free',
 
   // Premium

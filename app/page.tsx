@@ -917,9 +917,15 @@ const createNewSession = async () => {
       .single();
 
     if (error) {
-      console.error('Supabase insert error:', error);
-      throw error;
-    }
+  console.error('Supabase insert error:', error);
+  console.error('Error details:', {
+    message: error.message,
+    details: error.details,
+    hint: error.hint,
+    code: error.code,
+  });
+  throw error;
+}
     return data.id;
   } catch (error: any) {
     console.error('Error saving message:', {
