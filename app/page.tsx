@@ -1584,39 +1584,52 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
           )}
 
           {/* ====== BOTTOM: User + Collapse Button ====== */}
-          <div className="mt-auto pt-4 border-t border-gray-900">
-            <div className={cn("flex items-center", sidebarCollapsed ? "justify-center" : "justify-between")}>
+          {/* ====== BOTTOM: User + Collapse Button ====== */}
+<div className="mt-auto pt-6 pb-4 border-t border-gray-900">
 
-              {/* User Avatar + Name (only name when expanded) */}
-              <button
-                onClick={() => setShowUserDropdown(prev => !prev)}
-                className={cn(
-                  "flex items-center gap-3 rounded-xl transition-all hover:bg-gray-900",
-                  sidebarCollapsed ? "p-3" : "px-4 py-3"
-                )}
-              >
-                <div className="w-9 h-9 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full flex items-center justify-center shadow-lg flex-shrink-0">
-                  <User className="w-5 h-5 text-white" />
-                </div>
-                {!sidebarCollapsed && (
-                  <span className="text-sm font-medium truncate max-w-40">
-                    {user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User"}
-                  </span>
-                )}
-              </button>
-              {/* Collapse/Expand Toggle */}
-              <button
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="p-3 rounded-xl hover:bg-gray-900 transition-all ml-2"
-              >
-                {sidebarCollapsed ? (
-                  <ChevronRight className="w-5 h-5 text-gray-400" />
-                ) : (
-                  <ChevronLeft className="w-5 h-5 text-gray-400" />
-                )}
-              </button>
-            </div>
-          </div>
+  <div className="flex w-full flex-col items-center gap-3">
+    
+    {/* User Avatar */}
+   <button
+  onClick={() => setShowUserDropdown(prev => !prev)}
+  className={cn(
+    "mt-2 flex items-center rounded-xl transition-all hover:bg-gray-900",
+    sidebarCollapsed
+      ? "p-3 justify-center"
+      : "w-full px-4 py-3 gap-3 justify-start"
+  )}
+>
+
+      <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
+        <User className="w-5 h-5 text-white" />
+      </div>
+
+      {!sidebarCollapsed && (
+        <span className="text-sm font-medium truncate max-w-40">
+          {user?.user_metadata?.full_name ||
+            user?.email?.split("@")[0] ||
+            "User"}
+        </span>
+      )}
+    </button>
+
+    {/* Collapse / Expand – ALWAYS VISIBLE */}
+    <button
+      onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+      className="p-2 rounded-xl hover:bg-gray-900 transition-all"
+      title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+    >
+      {sidebarCollapsed ? (
+        <ChevronRight className="w-5 h-5 text-gray-400" />
+      ) : (
+        <ChevronLeft className="w-5 h-5 text-gray-400" />
+      )}
+    </button>
+  </div>
+  
+</div>
+
+
         </div>
       </div>
       {/* PROFILE SETTINGS MODAL – COMPACT & BEAUTIFUL (WITH MORE LANGUAGES) */}
@@ -1957,11 +1970,13 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
 <div
   className={cn(
     "overflow-x-auto scrollbar-thin transition-colors duration-300",
-    // Light mode = white bg + black text | Dark mode = black bg + white text
     darkMode
       ? "bg-black text-white scrollbar-thumb-gray-700 scrollbar-track-gray-900"
       : "bg-white text-black scrollbar-thumb-gray-400 scrollbar-track-gray-100",
-    isMobile ? "h-screen pt-16 pb-24" : "h-[calc(100vh-70px)] pb-20"
+    // Full height minus input area
+    isMobile 
+      ? "h-screen pt-16 pb-32"           // Mobile: leaves room for input at bottom
+      : "h-[calc(100vh-70px)] pb-32"      // Desktop: safe padding
   )}
 >
 
@@ -2171,15 +2186,15 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
             {/* Bottom Message Input */}
             <div className={cn(
   "fixed backdrop-blur-xl shadow-2xl transition-all duration-300 border-2 z-10 max-w-4xl mx-auto rounded-2xl",
-  // Dynamic background & border based on theme
-  darkMode 
-    ? "bg-black/95 border-gray-800" 
+  darkMode
+    ? "bg-black/95 border-gray-800"
     : "bg-white/95 border-gray-300",
+  // Lower placement with safe margins
   isMobile
-    ? "bottom-0 left-0 right-0 rounded-t-2xl"
-    : sidebarCollapsed 
-      ? "bottom-8 left-20 right-6" 
-      : "bottom-8 left-72 right-6"
+    ? "bottom-8 left-4 right-4"           // Mobile: lifted a bit more from very bottom
+    : sidebarCollapsed
+      ? "bottom-12 left-20 right-6"        // Desktop collapsed sidebar
+      : "bottom-12 left-72 right-6"        // Desktop expanded sidebar
 )}>
               <div className="flex items-center p-2">
                 {/* Left Action Buttons */}
@@ -2469,7 +2484,7 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
             type="text"
             value={webQuery}
             onChange={(e) => setWebQuery(e.target.value)}
-            placeholder="Ask Google anything..."
+            placeholder="Ask anything..."
            className={cn(
   "w-full px-4 py-3 rounded-xl border transition-all focus:outline-none",
   darkMode
@@ -2541,7 +2556,7 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     darkMode ? "text-gray-400" : "text-gray-500"
   )}
 >
-  Searching Google...
+  Searching ...
 </div>
 
       )}
