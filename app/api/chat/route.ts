@@ -10,7 +10,7 @@ const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 // LIVE FREE MODELS — VERIFIED DEC 5, 2025 ($0.00, UNLIMITED)
 const MODEL_MAPPING: { [key: string]: string } = {
   'google'      : 'google/gemma-3n-e2b-it:free',
-  'deepseek'    : 'deepseek/deepseek-r1-0528:free',
+  'deepseek'    : 'tngtech/deepseek-r1t2-chimera:free',
   'meta-llama'  : 'arcee-ai/trinity-mini:free',
   'qwen'        : 'qwen/qwen3-4b:free',
   'mistralai'   : 'mistralai/mistral-small-3.1-24b-instruct:free',
