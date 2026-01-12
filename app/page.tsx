@@ -539,14 +539,6 @@ useEffect(() => {
     setRecentSessions([]);
   }
 }, [user]);
-// Auto-load recent chats when user logs in
-useEffect(() => {
-  if (user) {
-    loadRecentSessions();
-  } else {
-    setRecentSessions([]);
-  }
-}, [user]);
 
 // ──────────────────────────────────────────────────────────────
 // CRITICAL: Keep Supabase session alive → fixes {} error forever
@@ -886,7 +878,8 @@ const createNewSession = async () => {
       return null;
     }
 
-    return data?.[0] ?? null;
+    return data?.[0]?.id ?? null;
+
   } catch (error) {
     console.error("❌ Unexpected error creating session:", error);
     return null;
@@ -1216,7 +1209,12 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
               Powerful AIs.<br />
               One{" "}
               <span className="relative inline-block min-w-[400px]">
-                <span className="absolute inset-0 text-teal-400 animate-chat">Chat</span>
+                {mounted && (
+  <span className="absolute inset-0 text-teal-400 animate-chat">
+    Chat
+  </span>
+)}
+
                 <span className="text-cyan-400 opacity-0 animate-subscription">Subscription</span>
               </span>.
             </h1>
