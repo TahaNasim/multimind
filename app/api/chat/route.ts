@@ -12,8 +12,8 @@ const MODEL_MAPPING: { [key: string]: string } = {
   'google'      : 'google/gemma-3n-e2b-it:free',
   'deepseek'    : 'tngtech/deepseek-r1t2-chimera:free',
   'meta-llama'  : 'arcee-ai/trinity-mini:free',
-  'qwen'        : 'qwen/qwen3-4b:free',
-  'mistralai'   : 'mistralai/mistral-small-3.1-24b-instruct:free',
+  'qwen'        : 'z-ai/glm-4.5-air:free',
+  'mistralai'   : 'meta-llama/llama-3.3-70b-instruct:free',
 
   // Premium
   'gpt-5'          : 'openai/gpt-4o',
